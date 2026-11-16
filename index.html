@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Racing Sim</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+:root { color-scheme: light; --ink: #1d1235; --cream: #fff6e6; --sun: #ffd23f; --berry: #ff4f8b; --sky: #8fd8ff; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; font-family: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  background: linear-gradient(var(--sky), #cdeeff 60%, #5fd35b 60%); color: var(--ink);
+  display: grid; place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+main { width: min(720px, 100%); display: grid; gap: 22px; }
+h1 { margin: 0; text-align: center; font-weight: 400; font-size: clamp(44px, 11vw, 84px); line-height: 1; color: var(--sun);
+  -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; transform: rotate(-2deg); }
+p.lead { margin: 0; text-align: center; font-size: 18px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+a.card {
+  display: grid; gap: 8px; text-decoration: none; color: var(--ink); background: var(--cream);
+  border: 4px solid var(--ink); border-radius: 22px; box-shadow: 0 8px 0 var(--ink); padding: 20px;
+  transition: transform .08s, box-shadow .08s;
+}
+a.card:hover { transform: translateY(-3px); box-shadow: 0 11px 0 var(--ink); }
+a.card:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--ink); }
+a.card:focus-visible { outline: 4px solid var(--berry); outline-offset: 4px; }
+.tag { justify-self: start; font-size: 13px; padding: 2px 10px; border-radius: 999px; border: 2px solid var(--ink); background: var(--sun); }
+.card h2 { margin: 0; font-weight: 400; font-size: 28px; }
+.card span.desc { font-size: 16px; line-height: 1.45; color: #4a3d66; }
+.go { justify-self: end; font-size: 18px; color: var(--berry); }
+footer { text-align: center; font-size: 14px; color: #1d1235cc; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Racing Sim</h1>
+  <p class="lead">운전은 AI가, 전략은 당신이. 레이싱 감독 시뮬레이션 두 편.</p>
+  <div class="cards">
+    <a class="card" href="kart/">
+      <span class="tag">3D · 추천</span>
+      <h2>토이 카트 랠리</h2>
+      <span class="desc">레이서와 카트 세팅을 고르고, 레이스 중 주행 스타일과 아이템 전략을 지시하세요. 드리프트 부스트와 아이템 배틀!</span>
+      <span class="go">플레이 →</span>
+    </a>
+    <a class="card" href="web/">
+      <span class="tag" style="background:#3fa9ff;color:#fff">전략</span>
+      <h2>GRID MASTER</h2>
+      <span class="desc">피트월 엔지니어가 되어 랩마다 주행 모드, 타이어, 피트 타이밍을 결정하는 F1 스타일 전략 시뮬레이션.</span>
+      <span class="go">플레이 →</span>
+    </a>
+  </div>
+  <footer>휴대폰에서도 플레이할 수 있어요</footer>
+</main>
+</body>
+</html>
