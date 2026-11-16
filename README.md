@@ -8,6 +8,8 @@
 | `web/` | **GRID MASTER 웹판**: 피트월 순위표 화면의 F1 스타일 전략 시뮬레이션 | `web/index.html`을 브라우저로 열기 |
 | `racing.py` | **GRID MASTER CLI판**: 터미널 전략 시뮬레이션 (아래 설명) | `python3 racing.py` |
 
+**바로 플레이:** https://jordonpark.github.io/racing-sim/ (GitHub Pages, `main`에 올리면 자동 배포)
+
 웹 게임 두 개는 빌드 없이 HTML 파일 하나로 동작합니다. 카트 게임은 three.js(r128)를 cdnjs에서 불러오므로 인터넷 연결이 필요합니다.
 
 ---
