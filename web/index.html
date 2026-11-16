@@ -1,0 +1,1195 @@
+<title>GRID MASTER</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+/* Layout: pit-wall timing monitor — header strip, timing tower on the left, my-car telemetry + team radio on the right. Single dark look by design. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0e13;
+  --panel: #111820;
+  --panel-2: #17212c;
+  --line: #24323f;
+  --fg: #dce5ed;
+  --muted: #8193a6;
+  --accent: #ffb21e;
+  --me: #2f7cf6;
+  --me-soft: #2f7cf62e;
+  --good: #3ddc84;
+  --bad: #ff5a5f;
+  --warn: #ffcf4a;
+  --purple: #c77dff;
+  --t-s: #ff4d4d;
+  --t-m: #ffd23f;
+  --t-h: #eef2f5;
+  --t-i: #43d17a;
+  --t-w: #3d8bff;
+  --font-display: "Chakra Petch", "IBM Plex Sans KR", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "IBM Plex Sans KR", monospace;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 40px;
+  min-height: 100%;
+}
+#app { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; opacity: .4; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.good { color: var(--good); } .bad { color: var(--bad); } .warn { color: var(--warn); } .purple { color: var(--purple); }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: .01em; }
+.eyebrow { font-family: var(--font-data); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+/* generic */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.pad { padding: 16px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.btn {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px;
+  padding: 9px 14px; font-weight: 500; transition: border-color .15s, background .15s;
+}
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: #1a1205; border-color: var(--accent); font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: #ffc24d; }
+.btn.danger { border-color: #ff5a5f66; color: var(--bad); }
+.btn.on { border-color: var(--accent); background: #ffb21e1f; color: var(--accent); }
+.btn kbd { font-family: var(--font-data); font-size: 11px; opacity: .6; margin-left: 6px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { flex: 1; background: var(--panel-2); border: 0; border-right: 1px solid var(--line); padding: 8px 10px; min-width: 0; }
+.seg button:last-child { border-right: 0; }
+.seg button.on { background: var(--accent); color: #1a1205; font-weight: 700; }
+
+/* tire chip */
+.tire {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  border: 3px solid currentColor; font-family: var(--font-data); font-weight: 700; font-size: 10px;
+  color: var(--fg); background: #000;
+}
+.tire-S { border-color: var(--t-s); } .tire-M { border-color: var(--t-m); } .tire-H { border-color: var(--t-h); }
+.tire-I { border-color: var(--t-i); } .tire-W { border-color: var(--t-w); }
+.wear { display: inline-flex; align-items: center; gap: 6px; }
+.wear .bar { width: 64px; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+.wear .bar i { display: block; height: 100%; }
+
+/* ── menu ── */
+.hero { display: grid; gap: 22px; padding: 34px 0 10px; }
+.wordmark {
+  font-family: var(--font-display); font-weight: 700; line-height: .9;
+  font-size: clamp(48px, 11vw, 128px); letter-spacing: -.01em;
+  display: flex; flex-wrap: wrap; gap: 0 .25em; align-items: baseline;
+}
+.wordmark span:last-child { color: var(--accent); }
+.startlights { display: flex; gap: 10px; }
+.startlights i { width: 22px; height: 22px; border-radius: 50%; background: #3a0d0f; border: 2px solid #20262e; }
+.startlights i.lit { background: #ff2a2a; box-shadow: 0 0 14px #ff2a2aaa; }
+.hero p { margin: 0; max-width: 60ch; color: var(--muted); font-size: 15px; }
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.menu-card { text-align: left; padding: 20px; display: grid; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.menu-card:hover { border-color: var(--accent); }
+.menu-card h2 { font-size: 22px; }
+.menu-card p { margin: 0; color: var(--muted); }
+
+/* ── setup ── */
+.setup-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.pick-list { display: grid; gap: 6px; }
+.pick {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px;
+}
+.pick.on { border-color: var(--accent); background: #ffb21e14; }
+.pick .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--muted); }
+.pick.on .dot { border-color: var(--accent); background: var(--accent); }
+.pick small { color: var(--muted); display: block; }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 12px; color: var(--muted); }
+.field input {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; color: var(--fg);
+  padding: 9px 12px; font: inherit; width: 100%;
+}
+.teamstripe { width: 4px; align-self: stretch; border-radius: 2px; }
+.stars { font-family: var(--font-data); color: var(--accent); letter-spacing: 1px; }
+.trackfacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.fact { background: var(--panel-2); border-radius: 4px; padding: 8px 10px; }
+.fact b { display: block; font-family: var(--font-data); font-size: 16px; }
+.tirepick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.tirepick .pick { grid-template-columns: auto minmax(0, 1fr); }
+
+/* ── race ── */
+.racehead {
+  display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px;
+}
+.racehead .lap { font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1; }
+.racehead .lap small { font-size: 16px; color: var(--muted); }
+.chip { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border-radius: 999px; background: var(--panel-2); font-size: 13px; }
+.chip .sw { width: 8px; height: 8px; border-radius: 50%; }
+.sc-banner { background: var(--warn); color: #1d1600; font-family: var(--font-data); font-weight: 700; padding: 4px 10px; border-radius: 3px; letter-spacing: .08em; }
+.flag-banner { background: repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0/12px 12px; color: #000; padding: 4px 10px; border-radius: 3px; }
+.flag-banner b { background: #fff; padding: 0 6px; font-family: var(--font-data); }
+.race-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+.tower-wrap { overflow-x: auto; }
+table.tower { width: 100%; border-collapse: collapse; min-width: 640px; }
+.tower th { text-align: left; font-weight: 500; font-size: 11px; color: var(--muted); letter-spacing: .06em; padding: 8px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tower td { padding: 7px 8px; border-bottom: 1px solid #1a2531; white-space: nowrap; }
+.tower td.r, .tower th.r { text-align: right; }
+.tower tr.me td { background: var(--me-soft); }
+.tower tr.me td:first-child { box-shadow: inset 3px 0 0 var(--me); }
+.tower tr.dnf td { color: var(--muted); }
+.pos { font-family: var(--font-data); font-weight: 700; width: 30px; }
+.drv { display: flex; gap: 8px; align-items: center; }
+.drv .stripe { width: 3px; height: 18px; border-radius: 2px; }
+.drv .team { color: var(--muted); font-size: 12px; }
+.delta { font-family: var(--font-data); font-size: 12px; width: 34px; }
+.tag { font-family: var(--font-data); font-size: 11px; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+.tag.pit { background: #2b8fd633; color: #6fc0ff; } .tag.err { background: #ffcf4a26; color: var(--warn); } .tag.pnc { background: #ff5a5f26; color: var(--bad); }
+.tag.push { color: var(--bad); } .tag.save { color: var(--good); }
+
+.side { display: flex; flex-direction: column; gap: 12px; }
+.mycar { padding: 14px 16px; display: grid; gap: 12px; }
+.mycar .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.bigpos { font-family: var(--font-display); font-size: 46px; font-weight: 700; line-height: .9; color: var(--fg); }
+.bigpos small { font-size: 18px; color: var(--muted); }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 13px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; }
+.gauge { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.gauge i { display: block; height: 100%; }
+.controls { padding: 14px 16px; display: grid; gap: 10px; }
+.controls .main { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.toast { background: #ffcf4a1f; border: 1px solid #ffcf4a55; color: var(--warn); padding: 8px 12px; border-radius: 4px; font-size: 13px; }
+.pitbox { display: grid; gap: 6px; padding: 12px; background: var(--panel-2); border-radius: 4px; border: 1px solid var(--line); }
+.pitbox .pick { background: var(--panel); }
+.radio { padding: 12px 16px; display: grid; gap: 6px; max-height: 320px; overflow-y: auto; }
+.radio ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.radio li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; font-size: 13px; }
+.radio li .l { font-family: var(--font-data); color: var(--muted); font-size: 11px; padding-top: 2px; }
+.radio li.me { font-weight: 700; }
+.ev-weather { color: #7fd8ff; } .ev-sc { color: var(--warn); } .ev-good { color: var(--good); }
+.ev-bad { color: var(--bad); } .ev-warn { color: var(--warn); } .ev-pit { color: var(--fg); } .ev-info { color: #9fc4d8; }
+
+.lightsbox { display: grid; justify-items: center; gap: 14px; padding: 26px 16px; text-align: center; }
+.lightsbox .startlights i { width: 34px; height: 34px; }
+
+/* results */
+.podium-msg { font-family: var(--font-display); font-size: 26px; }
+.two-col { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.help { max-width: 760px; }
+.help h3 { font-size: 16px; color: var(--accent); margin-top: 6px; }
+.help p, .help li { color: var(--fg); }
+.help ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+
+@media (max-width: 920px) {
+  .race-grid, .setup-grid, .two-col { grid-template-columns: minmax(0, 1fr); }
+  .race-grid .side { order: -1; }
+}
+@media (max-width: 560px) {
+  .tower .c-team, .tower .c-lead, .tower .c-delta { display: none; }
+  table.tower { min-width: 0; }
+  .tower td, .tower th { padding: 7px 5px; }
+  .tower .wear .bar { display: none; }
+  .wear .bar { width: 48px; }
+  .racehead .lap { font-size: 24px; }
+}
+/* mobile action bar */
+.mbar { display: none; }
+@media (hover: none) { .btn kbd, .seg .num.k { display: none; } }
+@media (max-width: 720px) {
+  body.racing { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .mbar {
+    display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 8px;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    padding: 10px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    background: color-mix(in srgb, var(--panel) 94%, transparent); border-top: 1px solid var(--line);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .mbar.single { grid-template-columns: 1fr; }
+  .mbar .btn { min-height: 52px; font-size: 16px; padding: 8px; }
+  .controls .hide-m { display: none; }
+  .btn, .seg button, .pick { min-height: 44px; }
+  .race-grid .side { display: contents; }
+  .race-grid .mycar { order: 1; } .race-grid .controls { order: 2; } .race-grid .tower-wrap { order: 3; } .race-grid .radio { order: 4; }
+  .race-grid { gap: 12px; }
+  .mycar { padding: 12px 14px; gap: 10px; }
+  .bigpos { font-size: 38px; }
+  .racehead { padding: 10px 12px; gap: 6px 14px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div id="app" aria-live="polite"></div>
+
+<script>
+"use strict";
+// ═══════════════ 데이터 ═══════════════
+const TEAMS = [
+  { name: "Apex Racing", pace: 0.00, rel: 0.9988, color: "#ff5a4e" },
+  { name: "Velocity GP", pace: 0.20, rel: 0.9982, color: "#2fd4e0" },
+  { name: "Nordwind Motorsport", pace: 0.40, rel: 0.9991, color: "#5b8cff" },
+  { name: "Crimson Arrow", pace: 0.60, rel: 0.9975, color: "#e05bd0" },
+  { name: "Horizon Racing", pace: 0.85, rel: 0.9980, color: "#ffb21e" },
+];
+const DRIVERS = [
+  ["M. Vance", 0, -0.25, 0.18, 0.70], ["L. Moreau", 0, 0.05, 0.25, 0.50],
+  ["K. Tanaka", 1, -0.20, 0.20, 0.60], ["R. Silva", 1, 0.00, 0.30, 0.80],
+  ["E. Lindqvist", 2, -0.10, 0.17, 0.40], ["J. Becker", 2, 0.10, 0.22, 0.50],
+  ["A. Rossi", 3, -0.15, 0.32, 0.90], ["D. Okafor", 3, 0.05, 0.24, 0.60],
+  ["S. Park", 4, -0.05, 0.21, 0.60], ["T. Novak", 4, 0.20, 0.28, 0.40],
+];
+const TRACKS = [
+  { name: "서울 스트리트 서킷", laps: 20, base: 92.0, wear: 1.15, overtake: 0.35, rain: 0.25, df: "high", pitLoss: 21, desc: "좁은 시가지, 추월 어려움, 코너 많음" },
+  { name: "알파인 링", laps: 22, base: 78.5, wear: 0.90, overtake: 0.60, rain: 0.40, df: "medium", pitLoss: 19, desc: "산악 고저차, 변덕스러운 날씨" },
+  { name: "데저트 스피드웨이", laps: 25, base: 88.0, wear: 1.40, overtake: 0.70, rain: 0.03, df: "low", pitLoss: 20, desc: "긴 직선, 뜨거운 노면, 타이어 혹사" },
+  { name: "하버 시티 GP", laps: 18, base: 104.0, wear: 1.00, overtake: 0.25, rain: 0.20, df: "high", pitLoss: 22, desc: "항구 시가지, 벽이 가까움" },
+  { name: "포레스트 파크", laps: 22, base: 95.0, wear: 1.10, overtake: 0.50, rain: 0.45, df: "medium", pitLoss: 20, desc: "숲 속 고속 코너, 비가 잦음" },
+  { name: "로마나 오토드로모", laps: 24, base: 81.0, wear: 0.80, overtake: 0.75, rain: 0.15, df: "low", pitLoss: 23, desc: "초고속 서킷, 슬립스트림 배틀" },
+];
+const TIRES = { S: "소프트", M: "미디엄", H: "하드", I: "인터", W: "웨트" };
+const DRY = ["S", "M", "H"];
+const WEATHER = { dry: { name: "맑음", color: "#ffd23f" }, light: { name: "약한 비", color: "#5ee2f0" }, heavy: { name: "폭우", color: "#3d8bff" } };
+const WEATHER_BASE = { dry: 0, light: 4.5, heavy: 10 };
+const TIRE_PACE = {
+  dry: { S: -0.8, M: 0, H: 0.6, I: 3.0, W: 6.5 },
+  light: { S: 5.0, M: 5.4, H: 6.0, I: 0, W: 1.5 },
+  heavy: { S: 13.0, M: 13.5, H: 14.0, I: 3.0, W: 0 },
+};
+const TIRE_WEAR = {
+  dry: { S: 4.2, M: 2.7, H: 1.8, I: 6.0, W: 9.0 },
+  light: { S: 2.0, M: 1.6, H: 1.2, I: 2.2, W: 3.0 },
+  heavy: { S: 1.8, M: 1.5, H: 1.1, I: 2.6, W: 1.8 },
+};
+const WEATHER_RISK = { dry: 1, light: 2, heavy: 3.5 };
+const MODES = {
+  push: { name: "푸시", pace: -0.45, wear: 1.35, fuel: 1.07, risk: 2.0, desc: "-0.45초/랩 · 마모 ×1.35 · 연료 ×1.07 · 실수 ×2" },
+  normal: { name: "노멀", pace: 0, wear: 1, fuel: 1, risk: 1, desc: "기준 페이스" },
+  conserve: { name: "세이브", pace: 0.40, wear: 0.70, fuel: 0.86, risk: 0.6, desc: "+0.4초/랩 · 마모 ×0.7 · 연료 ×0.86 · 실수 ×0.6" },
+};
+const DOWNFORCE = ["low", "medium", "high"];
+const DF = {
+  low: { name: "낮음", ot: 0.08, wear: 1.05, risk: 1.15, desc: "직선 빠름, 추월 유리" },
+  medium: { name: "중간", ot: 0, wear: 1.0, risk: 1.0, desc: "균형" },
+  high: { name: "높음", ot: -0.05, wear: 0.95, risk: 0.85, desc: "코너 안정, 타이어 보호" },
+};
+const FUEL_LOADS = { light: { name: "가볍게", m: 0.99 }, std: { name: "표준", m: 1.05 }, heavy: { name: "넉넉하게", m: 1.11 } };
+const FUEL_PACE = 0.06;
+const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+const DIFFICULTY = { easy: { name: "쉬움", skill: -0.35 }, normal: { name: "보통", skill: -0.10 }, hard: { name: "어려움", skill: 0.10 } };
+const SPEEDS = { slow: 1200, normal: 600, fast: 220 };
+
+// ═══════════════ 상태 ═══════════════
+let S = null;
+function freshState() {
+  return {
+    screen: "menu",
+    rng: (Date.now() ^ (Math.random() * 1e9)) | 0,
+    mode: "quick",
+    cfg: { track: 0, laps: 20, team: 2, name: "YOU", diff: "normal", races: 6 },
+    cars: [],
+    season: null,
+    race: null,
+    ui: { playing: false, speed: "normal", autoStop: true, pitOpen: false, quitConfirm: false, toast: "", lights: -1 },
+  };
+}
+
+// ═══════════════ 난수 ═══════════════
+function rand() {
+  let t = (S.rng = (S.rng + 0x6D2B79F5) | 0);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const uni = (a, b) => a + (b - a) * rand();
+function gauss(m, sd) { let u = 0; while (u === 0) u = rand(); const v = rand(); return m + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+const pick = (a) => a[Math.floor(rand() * a.length)];
+const randint = (a, b) => a + Math.floor(rand() * (b - a + 1));
+function wpick(items, weights) { let r = rand() * weights.reduce((x, y) => x + y, 0); for (let i = 0; i < items.length; i++) { r -= weights[i]; if (r < 0) return items[i]; } return items[items.length - 1]; }
+
+// ═══════════════ 엔진 ═══════════════
+const T = () => TRACKS[S.race.track];
+const player = () => S.cars.find((c) => c.isPlayer);
+const running = () => S.cars.filter((c) => !c.dnf).sort((a, b) => a.total - b.total);
+
+function buildField(name, teamIdx, diff) {
+  const seat = DRIVERS.map((d, i) => [d, i]).filter(([d]) => d[1] === teamIdx)[1][1];
+  return DRIVERS.map(([n, ti, skill, cons, aggr], i) => {
+    const me = i === seat;
+    return { id: i, name: me ? name : n, team: ti, skill: me ? DIFFICULTY[diff].skill : skill, cons: me ? 0.22 : cons, aggr: me ? 0.6 : aggr, isPlayer: me, points: 0, wins: 0 };
+  });
+}
+function resetCar(c, tr, laps) {
+  Object.assign(c, { total: 0, tire: "M", wear: 0, tireAge: 0, usedDry: [], usedWet: false, fuel: laps * 1.05, fuelWarned: false,
+    mode: "normal", df: tr.df, pits: 0, dnf: null, lapsDone: 0, lastLap: null, bestLap: null, pitReq: null, penalty: 0, flag: "", grid: 0, racePoints: 0 });
+}
+function fitTire(c, t) {
+  c.tire = t; c.wear = 0; c.tireAge = 0;
+  if (DRY.includes(t)) { if (!c.usedDry.includes(t)) c.usedDry.push(t); } else c.usedWet = true;
+}
+function genWeather(tr, laps) {
+  let w = rand() < tr.rain * 0.45 ? "light" : "dry";
+  const st = [w];
+  for (let i = 0; i < laps + 3; i++) {
+    const r = rand();
+    if (w === "dry") { if (r < tr.rain * 0.08) w = "light"; }
+    else if (w === "light") { if (r < 0.10 + tr.rain * 0.1) w = "heavy"; else if (r < 0.26) w = "dry"; }
+    else if (r < 0.20) w = "light";
+    st.push(w);
+  }
+  return st;
+}
+function newRace(trackIdx, laps) {
+  const tr = TRACKS[trackIdx];
+  S.race = {
+    track: trackIdx, laps, lap: 0, weather: null, radarOk: [], scLeft: 0, scNext: false, events: [],
+    playerAuto: false, fastest: null, order: [], quali: [], classified: null, started: false,
+    pending: { df: "medium", fuel: "std", tire: null },
+  };
+  S.race.weather = genWeather(tr, laps);
+  for (let i = 0; i < laps + 3; i++) S.race.radarOk.push(rand() < 0.8);
+  const w0 = S.race.weather[0];
+  S.race.pending.tire = w0 === "dry" ? "M" : w0 === "light" ? "I" : "W";
+  S.cars.forEach((c) => resetCar(c, tr, laps));
+  S.ui.pitOpen = false; S.ui.quitConfirm = false; S.ui.toast = ""; S.ui.lights = -1; S.ui.playing = false;
+}
+function log(msg, kind = "info", me = false) {
+  S.race.events.push({ lap: S.race.lap, msg, kind, me });
+  if (S.race.events.length > 250) S.race.events.shift();
+}
+const setupDelta = (c) => 0.25 * Math.abs(DOWNFORCE.indexOf(c.df) - DOWNFORCE.indexOf(T().df));
+const wearRate = (c, tire, w) => TIRE_WEAR[w][tire] * T().wear * MODES[c.mode].wear * DF[c.df].wear;
+const wetSoFar = () => S.race.weather.slice(0, S.race.lap + 1).some((w) => w !== "dry");
+const wetRace = () => S.race.weather.slice(0, S.race.laps + 1).some((w) => w !== "dry");
+
+function forecast() {
+  const r = S.race, cur = r.weather[r.lap];
+  if (!r.radarOk[r.lap]) return { text: "레이더 신호 불안정…", cls: "muted" };
+  for (let k = 1; k <= 3; k++) {
+    if (r.lap + k > r.laps) break;
+    const n = r.weather[r.lap + k];
+    if (n !== cur) return { text: `${k}랩 후 ${WEATHER[n].name} 예상`, cls: "warn" };
+  }
+  return { text: "향후 3랩 변화 없음", cls: "good" };
+}
+
+function applyPlayerSetup() {
+  const p = player(), pend = S.race.pending;
+  p.df = pend.df;
+  p.fuel = S.race.laps * FUEL_LOADS[pend.fuel].m;
+  fitTire(p, pend.tire);
+}
+function aiSetup() {
+  const w0 = S.race.weather[0];
+  for (const c of S.cars) {
+    if (c.isPlayer) continue;
+    c.df = rand() < 0.8 ? T().df : pick(DOWNFORCE);
+    c.fuel = S.race.laps * 1.05;
+    if (w0 === "light") fitTire(c, "I");
+    else if (w0 === "heavy") fitTire(c, "W");
+    else fitTire(c, wpick(DRY, [4, 5, 1.5]));
+  }
+}
+function qualify() {
+  const w = S.race.weather[0];
+  const best = Object.keys(TIRE_PACE[w]).reduce((a, b) => (TIRE_PACE[w][a] <= TIRE_PACE[w][b] ? a : b));
+  const res = S.cars.map((c) => ({
+    id: c.id,
+    t: T().base + TEAMS[c.team].pace + c.skill + setupDelta(c) + WEATHER_BASE[w] + TIRE_PACE[w][best] + Math.abs(gauss(0, c.cons * 1.3)) - 0.6,
+  })).sort((a, b) => a.t - b.t);
+  res.forEach((q, i) => { const c = S.cars[q.id]; c.grid = i + 1; c.total = i * 0.25; });
+  S.race.quali = res;
+  S.race.order = res.map((q) => q.id);
+}
+
+function chooseDry(c, lapsLeft) {
+  const mustChange = !wetSoFar() && !c.usedWet && c.usedDry.length === 1;
+  const opts = DRY.filter((t) => !(mustChange && c.usedDry.includes(t))).map((t) => [t, 78 / (TIRE_WEAR.dry[t] * T().wear)]);
+  const stretch = 1 + c.aggr * 0.15;
+  for (const [t, life] of opts) if (life * stretch >= lapsLeft) return t;
+  return opts[opts.length - 1][0];
+}
+function aiDecide(c, gapAhead) {
+  const r = S.race, tr = T();
+  const lapsLeft = r.laps - r.lap + 1;
+  const w = r.weather[r.lap - 1];
+  const threshold = 70 + c.aggr * 15;
+  let want = null;
+  let streak = 0;
+  for (let k = r.lap - 1; k >= 0; k--) { if (r.weather[k] !== w) break; streak++; }
+  const pitCost = tr.pitLoss * (r.scLeft > 0 ? 0.45 : 1) + 3;
+  const worth = (n) => (TIRE_PACE[w][c.tire] - TIRE_PACE[w][n]) * Math.min(lapsLeft, 8) > pitCost;
+  const wrong = (w === "dry" && (c.tire === "I" || c.tire === "W")) || (w === "light" && DRY.includes(c.tire)) || (w === "heavy" && c.tire !== "W");
+  if (wrong) {
+    const n = w === "dry" ? chooseDry(c, lapsLeft) : w === "light" ? "I" : "W";
+    if (streak >= (w === "heavy" ? 1 : 2) && worth(n) && rand() < 0.8) want = n;
+  } else if (c.wear > threshold && lapsLeft > 2) {
+    want = w === "dry" ? chooseDry(c, lapsLeft) : c.tire;
+  } else if (w === "dry" && !wetSoFar() && !c.usedWet && c.usedDry.length === 1 && lapsLeft <= 4 + (c.wear > 40 ? 3 : 0)) {
+    want = chooseDry(c, lapsLeft);
+  } else if (r.scLeft > 0 && c.wear > 45 && lapsLeft > 4 && rand() < 0.6) {
+    want = w === "dry" ? chooseDry(c, lapsLeft) : c.tire;
+  }
+  if (want && lapsLeft >= 1) c.pitReq = want;
+
+  const need = lapsLeft;
+  if (c.fuel < need + 0.3) c.mode = "conserve";
+  else if (lapsLeft <= 3 && c.fuel >= lapsLeft * 1.07 && c.wear < 90) c.mode = "push";
+  else if (gapAhead != null && gapAhead < 1 && c.wear < 65 && c.fuel >= need * 1.04 && rand() < c.aggr) c.mode = "push";
+  else c.mode = "normal";
+}
+function baseLap(c, w, sc) {
+  const tr = T();
+  if (sc) return tr.base * 1.35 + WEATHER_BASE[w] + uni(0, 0.3);
+  const wearPen = 0.012 * c.wear + Math.max(0, c.wear - 70) ** 2 * 0.004;
+  let t = tr.base + TEAMS[c.team].pace + c.skill + setupDelta(c) + WEATHER_BASE[w] + TIRE_PACE[w][c.tire] + wearPen
+    + c.fuel * FUEL_PACE + MODES[c.mode].pace + gauss(0, c.cons);
+  if (S.race.lap === 1) t += 2 + Math.abs(gauss(0, 0.6));
+  return t;
+}
+function retire(c, reason, scChance) {
+  c.dnf = reason;
+  log(`${c.name} 리타이어 - ${reason}`, "bad", c.isPlayer);
+  if (S.race.scLeft === 0 && rand() < scChance) S.race.scNext = true;
+}
+function passProb(c, a, delta) {
+  const base = T().overtake + (S.race.lap === 1 ? 0.15 : 0);
+  let p = base * (0.5 + delta * 0.8) + c.aggr * 0.12;
+  p += DF[c.df].ot - DF[a.df].ot * 0.5;
+  if (c.mode === "push") p += 0.10;
+  if (a.mode === "push") p -= 0.06;
+  p += (a.wear - c.wear) * 0.004;
+  return Math.max(0.03, Math.min(0.92, p));
+}
+function simLap() {
+  const r = S.race, tr = T();
+  const prev = running();
+  r.lap++;
+  const lap = r.lap, w = r.weather[lap];
+  if (w !== r.weather[lap - 1]) log(`날씨 변화: ${WEATHER[r.weather[lap - 1]].name} → ${WEATHER[w].name}`, "weather");
+  const sc = r.scLeft > 0;
+  prev.forEach((c, i) => { if (!c.isPlayer || r.playerAuto) aiDecide(c, i > 0 ? c.total - prev[i - 1].total : null); });
+
+  const proposed = {};
+  prev.forEach((c, idx) => {
+    c.flag = "";
+    let extra = 0, clean = !sc;
+    if (c.pitReq) {
+      const loss = tr.pitLoss * (sc ? 0.45 : 1);
+      let stop = uni(2.1, 3.0);
+      if (rand() < 0.06) { stop += uni(3, 8); log(`${c.name} 피트 작업 지연! (${stop.toFixed(1)}s)`, "warn", c.isPlayer); }
+      extra += loss + stop;
+      const old = c.tire;
+      fitTire(c, c.pitReq);
+      c.pits++; c.flag = "PIT"; clean = false;
+      if (c.isPlayer || idx < 3) log(`${c.name} 피트인: ${TIRES[old]} → ${TIRES[c.tire]} (${stop.toFixed(1)}s)`, "pit", c.isPlayer);
+      c.pitReq = null;
+    }
+    let t = baseLap(c, w, sc);
+
+    let risk = 0.0045 * MODES[c.mode].risk * DF[c.df].risk * WEATHER_RISK[w] * (c.cons / 0.22);
+    if (w !== "dry" && DRY.includes(c.tire)) risk *= 3;
+    if (sc) risk *= 0.2;
+    if (lap === 1) risk *= 2;
+    if (rand() < risk) {
+      if (rand() < 0.22) { retire(c, pick(["벽에 충돌", "스핀 후 그래블 고립", "접촉 사고"]), 0.75); return; }
+      const lost = uni(2, 6);
+      extra += lost; clean = false; c.flag = c.flag || "ERR";
+      log(`${c.name} 코스 이탈! (-${lost.toFixed(1)}s)`, "warn", c.isPlayer);
+    }
+    const fail = (1 - TEAMS[c.team].rel) * (c.mode === "push" ? 1.6 : 1);
+    if (rand() < fail) { retire(c, pick(["엔진 고장", "기어박스 고장", "유압 문제", "브레이크 과열"]), 0.3); return; }
+    if (c.wear > 88 && rand() < (c.wear - 88) * 0.025) {
+      const nt = DRY.includes(c.tire) ? chooseDry(c, r.laps - lap) : c.tire;
+      extra += 18 + tr.pitLoss;
+      fitTire(c, nt); c.pits++; c.flag = "PNC"; clean = false;
+      log(`${c.name} 타이어 펑크! 천천히 피트로 복귀`, "bad", c.isPlayer);
+    }
+    c.fuel -= MODES[c.mode].fuel * (sc ? 0.6 : 1);
+    if (c.fuel < 0) { c.fuel = 0; retire(c, "연료 고갈", 0.2); return; }
+    if (c.isPlayer && !c.fuelWarned && c.fuel < (r.laps - lap) * 0.99) {
+      c.fuelWarned = true;
+      log("무전: 연료가 부족합니다! 세이브 모드로 아껴주세요", "bad", true);
+    }
+    c.wear = Math.min(100, c.wear + wearRate(c, c.tire, w) * (sc ? 0.4 : 1) * uni(0.9, 1.1));
+    c.tireAge++;
+    if (clean && (c.bestLap == null || t < c.bestLap)) c.bestLap = t;
+    if (clean && (!r.fastest || t < r.fastest.t)) r.fastest = { t, id: c.id, lap };
+    c.lastLap = t + extra;
+    c.lapsDone = lap;
+    proposed[c.id] = c.total + t + extra;
+  });
+
+  // 추월 / 순위
+  const res = [];
+  for (const c of prev) {
+    if (!(c.id in proposed)) continue;
+    res.push(c);
+    let i = res.length - 1;
+    while (i > 0) {
+      const a = res[i - 1];
+      let t = proposed[c.id];
+      const ta = proposed[a.id];
+      if (t > ta + 0.15) break;
+      const pitA = a.flag === "PIT" || a.flag === "PNC", pitC = c.flag === "PIT" || c.flag === "PNC";
+      const free = (pitA && !pitC) || t < ta - 1.2;
+      if (!free && (sc || rand() >= passProb(c, a, ta - t))) {
+        proposed[c.id] = ta + uni(0.2, 0.6);
+        if (!sc && c.isPlayer) log(`${a.name} 추월 시도 실패 - 방어당함`, "warn", true);
+        else if (!sc && a.isPlayer) log(`${c.name}의 추월 시도를 막아냄!`, "good", true);
+        break;
+      }
+      if (t >= ta) { t = ta - 0.05; proposed[c.id] = t; }
+      proposed[a.id] = Math.max(ta, t + uni(0.15, 0.4));
+      res[i - 1] = c; res[i] = a; i--;
+      if (!free && (c.isPlayer || a.isPlayer || i < 3)) {
+        log(`${c.name} ▶ ${a.name} 추월! (P${i + 1})`, c.isPlayer ? "good" : a.isPlayer ? "bad" : "info", c.isPlayer || a.isPlayer);
+      }
+    }
+  }
+  for (let i = 1; i < res.length; i++) {
+    const lo = proposed[res[i - 1].id] + 0.05;
+    if (proposed[res[i].id] < lo) proposed[res[i].id] = lo;
+    if (sc && proposed[res[i].id] - proposed[res[i - 1].id] > 0.8) proposed[res[i].id] = proposed[res[i - 1].id] + 0.8;
+  }
+  res.forEach((c) => (c.total = proposed[c.id]));
+
+  // 세이프티카
+  if (sc) {
+    r.scLeft--;
+    if (r.scLeft === 0) log("세이프티카 철수 - 그린 플래그!", "good");
+  } else if (rand() < 0.004) {
+    r.scNext = true;
+    log("코스 위 파편 발견", "warn");
+  }
+  if (r.scNext && r.scLeft === 0 && lap < r.laps) {
+    r.scLeft = randint(2, 4);
+    log(`세이프티카 출동! (${r.scLeft}랩)`, "sc");
+  }
+  r.scNext = false;
+  r.order = running().map((c) => c.id);
+}
+function finish() {
+  const r = S.race, wet = wetRace();
+  for (const c of S.cars) {
+    if (!c.dnf && !wet && !c.usedWet && c.usedDry.length < 2) {
+      c.penalty = 20;
+      log(`${c.name} +20초 페널티 (드라이 컴파운드 2종 미사용)`, "bad", c.isPlayer);
+    }
+  }
+  const fin = S.cars.filter((c) => !c.dnf).sort((a, b) => a.total + a.penalty - (b.total + b.penalty));
+  const dnfs = S.cars.filter((c) => c.dnf).sort((a, b) => b.lapsDone - a.lapsDone);
+  const cl = fin.concat(dnfs);
+  cl.forEach((c, i) => {
+    c.racePoints = !c.dnf && i < POINTS.length ? POINTS[i] : 0;
+    c.points += c.racePoints;
+    if (i === 0 && !c.dnf) c.wins++;
+  });
+  r.classified = cl.map((c) => c.id);
+}
+function stepLap() {
+  const r = S.race;
+  if (!r || r.lap >= r.laps) return [];
+  const p = player();
+  const before = { w: r.weather[r.lap], sc: r.scLeft, dnf: p.dnf, wear: p.wear, warned: p.fuelWarned };
+  simLap();
+  const alerts = [];
+  if (r.weather[r.lap] !== before.w) alerts.push(`날씨 ${WEATHER[r.weather[r.lap]].name}`);
+  if (r.scLeft > 0 && before.sc === 0) alerts.push("세이프티카 출동");
+  if (p.dnf && !before.dnf) alerts.push("리타이어");
+  if (!p.dnf && p.wear >= 75 && before.wear < 75) alerts.push("타이어 마모 75% 돌파");
+  if (p.fuelWarned && !before.warned) alerts.push("연료 부족");
+  if (r.lap >= r.laps) finish();
+  return alerts;
+}
+
+// ═══════════════ 진행 제어 ═══════════════
+let timer = null;
+function setPlaying(on) {
+  S.ui.playing = on;
+  clearTimeout(timer);
+  if (on) schedule();
+  render();
+}
+function schedule() {
+  const fast = S.race.playerAuto || player().dnf;
+  timer = setTimeout(() => {
+    const alerts = stepLap();
+    const r = S.race;
+    if (r.lap >= r.laps) { S.ui.playing = false; render(); return; }
+    if (alerts.length && !r.playerAuto && !player().dnf && S.ui.autoStop) {
+      S.ui.playing = false;
+      S.ui.toast = "자동 정지 · " + alerts.join(", ");
+      render();
+      return;
+    }
+    render();
+    if (S.ui.playing) schedule();
+  }, fast ? 160 : SPEEDS[S.ui.speed]);
+}
+function runLights() {
+  S.ui.lights = 0;
+  render();
+  let n = 0;
+  const step = () => {
+    n++;
+    S.ui.lights = n;
+    render();
+    if (n < 5) timer = setTimeout(step, 450);
+    else timer = setTimeout(() => {
+      S.race.started = true;
+      S.ui.lights = -1;
+      log("레이스 스타트!", "good");
+      render();
+    }, 300 + Math.random() * 900);
+  };
+  timer = setTimeout(step, 450);
+}
+
+// 레이스 중에는 화면이 꺼지지 않도록 (지원 안 되면 조용히 무시)
+let wakeLock = null;
+async function syncWakeLock() {
+  const want = S.screen === "race" && S.race && S.race.started && S.race.lap < S.race.laps && document.visibilityState === "visible";
+  try {
+    if (want && !wakeLock && navigator.wakeLock) {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } else if (!want && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) { wakeLock = null; }
+}
+document.addEventListener("visibilitychange", () => { if (S) syncWakeLock(); });
+
+// ═══════════════ 화면 유틸 ═══════════════
+const $app = document.getElementById("app");
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function fmtLap(t) { if (t == null) return "-"; const m = Math.floor(t / 60); return `${m}:${(t - m * 60).toFixed(3).padStart(6, "0")}`; }
+const tireChip = (t) => `<span class="tire tire-${t}" title="${TIRES[t]}">${t}</span>`;
+function wearBar(w) {
+  const col = w < 50 ? "var(--good)" : w < 75 ? "var(--warn)" : "var(--bad)";
+  return `<span class="wear"><span class="bar"><i style="width:${w.toFixed(0)}%;background:${col}"></i></span><span class="num">${w.toFixed(0)}%</span></span>`;
+}
+const weatherChip = (w) => `<span class="chip"><span class="sw" style="background:${WEATHER[w].color}"></span>${WEATHER[w].name}</span>`;
+const btn = (act, label, opts = {}) =>
+  `<button class="btn ${opts.cls || ""}" data-act="${act}" ${opts.v != null ? `data-v="${esc(opts.v)}"` : ""} ${opts.disabled ? "disabled" : ""}>${label}${opts.kbd ? `<kbd>${opts.kbd}</kbd>` : ""}</button>`;
+const teamName = (c) => TEAMS[c.team].name;
+function lightsHtml(n) { return `<div class="startlights" aria-hidden="true">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "lit" : ""}"></i>`).join("")}</div>`; }
+
+// ═══════════════ 화면 ═══════════════
+function render() {
+  const fn = { menu: viewMenu, help: viewHelp, setup: viewSetup, "race-setup": viewRaceSetup, quali: viewQuali, race: viewRace, results: viewResults, standings: viewStandings }[S.screen];
+  $app.innerHTML = fn();
+  document.body.classList.toggle("racing", S.screen === "race");
+  syncWakeLock();
+  window.claude?.hot?.snapshot?.(() => JSON.parse(JSON.stringify(S)));
+}
+
+function viewMenu() {
+  return `
+  <section class="hero">
+    ${lightsHtml(3)}
+    <h1 class="wordmark"><span>GRID</span><span>MASTER</span></h1>
+    <p>10대가 달리는 레이스에서 당신은 피트월의 레이스 엔지니어입니다. 주행 모드, 타이어, 피트 타이밍을 랩마다 결정해 드라이버를 포디움에 올리세요.</p>
+  </section>
+  <div class="menu-grid">
+    <button class="menu-card" data-act="mode" data-v="quick"><span class="eyebrow">Single race</span><h2>퀵 레이스</h2><p>서킷과 랩 수를 골라 한 판 바로 달립니다.</p></button>
+    <button class="menu-card" data-act="mode" data-v="season"><span class="eyebrow">Championship</span><h2>챔피언십</h2><p>3~6라운드 시즌. 드라이버·컨스트럭터 포인트를 겨룹니다.</p></button>
+    <button class="menu-card" data-act="go" data-v="help"><span class="eyebrow">How to play</span><h2>게임 방법</h2><p>모드, 타이어, 날씨, 규정 설명.</p></button>
+  </div>`;
+}
+
+function viewHelp() {
+  return `
+  <div class="panel pad help stack">
+    <h2>게임 방법</h2>
+    <h3>목표</h3>
+    <p>운전은 자동입니다. 당신은 전략을 정합니다. 최대한 좋은 순위로 완주하세요.</p>
+    <h3>레이스 조작</h3>
+    <ul>
+      <li><b>다음 랩</b> (Space/Enter) · <b>자동 진행</b> (A): 중요한 상황이 생기면 자동으로 멈춥니다</li>
+      <li><b>주행 모드</b> (1·2·3): 푸시 / 노멀 / 세이브</li>
+      <li><b>피트인</b> (P): 다음 랩에 들어갈 타이어를 예약합니다</li>
+    </ul>
+    <h3>주행 모드</h3>
+    <ul>
+      <li>푸시: ${MODES.push.desc}</li>
+      <li>세이브: ${MODES.conserve.desc}</li>
+    </ul>
+    <h3>타이어</h3>
+    <ul>
+      <li>${tireChip("S")} 소프트 빠르지만 빨리 닳음 · ${tireChip("M")} 미디엄 균형 · ${tireChip("H")} 하드 느리지만 오래감</li>
+      <li>${tireChip("I")} 인터: 약한 비 · ${tireChip("W")} 웨트: 폭우. 비 오는 날 슬릭 타이어는 매우 느리고 위험합니다.</li>
+      <li>마모 70%를 넘으면 급격히 느려지고, 90% 근처에서는 펑크가 날 수 있습니다.</li>
+    </ul>
+    <h3>규칙과 변수</h3>
+    <ul>
+      <li>비가 한 번도 오지 않은 레이스는 드라이 타이어 2종을 반드시 써야 합니다. 어기면 +20초.</li>
+      <li>피트 스톱은 약 20초를 잃습니다. 세이프티카 중에는 절반 이하입니다.</li>
+      <li>연료가 바닥나면 리타이어. 무거운 연료는 느리지만 푸시할 여유를 줍니다.</li>
+      <li>레이더 예보 정확도는 약 80%입니다.</li>
+      <li>다운포스가 서킷 특성과 맞지 않으면 랩당 손해를 봅니다.</li>
+    </ul>
+    <div class="row">${btn("go", "메인 메뉴", { v: "menu", cls: "primary" })}</div>
+  </div>`;
+}
+
+function trackFacts(tr, laps) {
+  const over = tr.overtake > 0.6 ? "쉬움" : tr.overtake > 0.4 ? "보통" : "어려움";
+  const wear = tr.wear > 1.1 ? "높음" : tr.wear >= 0.95 ? "보통" : "낮음";
+  return `<div class="trackfacts">
+    <div class="fact"><span class="eyebrow">랩</span><b>${laps}</b></div>
+    <div class="fact"><span class="eyebrow">기준 랩타임</span><b>${fmtLap(tr.base)}</b></div>
+    <div class="fact"><span class="eyebrow">추월</span><b>${over}</b></div>
+    <div class="fact"><span class="eyebrow">타이어 마모</span><b>${wear}</b></div>
+    <div class="fact"><span class="eyebrow">강우 확률</span><b>${Math.round(tr.rain * 100)}%</b></div>
+    <div class="fact"><span class="eyebrow">피트 손실</span><b>~${tr.pitLoss}s</b></div>
+  </div>`;
+}
+
+function viewSetup() {
+  const c = S.cfg, season = S.mode === "season";
+  const trackList = TRACKS.map((t, i) => `
+    <button class="pick ${c.track === i ? "on" : ""}" data-act="cfg-track" data-v="${i}">
+      <span class="dot"></span><span><b>${t.name}</b><small>${t.desc}</small></span><span class="num muted">${t.laps}랩</span>
+    </button>`).join("");
+  const teamList = TEAMS.map((t, i) => `
+    <button class="pick ${c.team === i ? "on" : ""}" data-act="cfg-team" data-v="${i}">
+      <span class="teamstripe" style="background:${t.color}"></span>
+      <span><b>${t.name}</b><small>신뢰도 ${t.rel > 0.9985 ? "높음" : t.rel > 0.9979 ? "보통" : "낮음"}</small></span>
+      <span class="stars" title="머신 성능">${"★".repeat(5 - i)}${"☆".repeat(i)}</span>
+    </button>`).join("");
+  return `
+  <div class="row" style="justify-content:space-between">
+    <h2>${season ? "챔피언십" : "퀵 레이스"} 설정</h2>${btn("go", "← 메뉴", { v: "menu" })}
+  </div>
+  <div class="setup-grid">
+    <div class="panel pad stack">
+      ${season ? `
+        <span class="eyebrow">시즌 일정</span>
+        <div class="seg">${[3, 4, 5, 6].map((n) => `<button data-act="cfg-races" data-v="${n}" class="${c.races === n ? "on" : ""}">${n}라운드</button>`).join("")}</div>
+        <ol class="pick-list" style="margin:0;padding-left:20px">${TRACKS.slice(0, c.races).map((t) => `<li>${t.name} <span class="muted num">${t.laps}랩</span></li>`).join("")}</ol>
+      ` : `
+        <span class="eyebrow">서킷</span>
+        <div class="pick-list">${trackList}</div>
+        <div class="field"><label for="laps">랩 수 (5~60)</label><input id="laps" type="number" min="5" max="60" value="${c.laps}" inputmode="numeric"></div>
+      `}
+    </div>
+    <div class="panel pad stack">
+      <span class="eyebrow">소속 팀</span>
+      <div class="pick-list">${teamList}</div>
+      <div class="field"><label for="pname">드라이버 이름</label><input id="pname" maxlength="14" value="${esc(c.name)}" autocomplete="off"></div>
+      <span class="eyebrow">난이도 (드라이버 실력)</span>
+      <div class="seg">${Object.entries(DIFFICULTY).map(([k, d]) => `<button data-act="cfg-diff" data-v="${k}" class="${c.diff === k ? "on" : ""}">${d.name}</button>`).join("")}</div>
+      ${btn("start-setup", season ? "시즌 시작" : "레이스 위켄드 시작", { cls: "primary" })}
+    </div>
+  </div>`;
+}
+
+function viewRaceSetup() {
+  const r = S.race, tr = T(), pend = r.pending, w0 = r.weather[0], p = player();
+  const roundTag = S.season ? `<span class="eyebrow">Round ${S.season.round + 1} / ${S.season.tracks.length}</span>` : `<span class="eyebrow">Race weekend</span>`;
+  const tmp = Object.assign({}, p, { mode: "normal", df: pend.df });
+  return `
+  <div class="stack">
+    ${roundTag}
+    <div class="row" style="justify-content:space-between"><h2>${tr.name}</h2>${weatherChip(w0)}</div>
+    <p class="muted" style="margin:0">${tr.desc}</p>
+    ${trackFacts(tr, r.laps)}
+  </div>
+  <div class="setup-grid">
+    <div class="panel pad stack">
+      <span class="eyebrow">1 · 다운포스</span>
+      <div class="pick-list">${DOWNFORCE.map((d) => `
+        <button class="pick ${pend.df === d ? "on" : ""}" data-act="rs-df" data-v="${d}"><span class="dot"></span><span><b>${DF[d].name}</b><small>${DF[d].desc}</small></span><span></span></button>`).join("")}
+      </div>
+      <p class="muted" style="margin:0;font-size:13px">서킷 특성에 맞는 다운포스가 가장 빠릅니다. 설명을 보고 판단하세요.</p>
+      <span class="eyebrow">2 · 연료 탑재량</span>
+      <div class="seg">${Object.entries(FUEL_LOADS).map(([k, f]) => `<button data-act="rs-fuel" data-v="${k}" class="${pend.fuel === k ? "on" : ""}">${f.name} <span class="num">${(r.laps * f.m).toFixed(1)}</span></button>`).join("")}</div>
+      <p class="muted" style="margin:0;font-size:13px">랩당 약 1.0 소모. 푸시하면 더 쓰고, 세이브하면 덜 씁니다.</p>
+    </div>
+    <div class="panel pad stack">
+      <span class="eyebrow">3 · 스타트 타이어</span>
+      <div class="tirepick">${"SMHIW".split("").map((t) => `
+        <button class="pick ${pend.tire === t ? "on" : ""}" data-act="rs-tire" data-v="${t}">
+          ${tireChip(t)}<span><b>${TIRES[t]}</b><small class="num">${TIRE_PACE[w0][t] >= 0 ? "+" : ""}${TIRE_PACE[w0][t].toFixed(1)}s · 마모 ${wearRate(tmp, t, w0).toFixed(1)}%/랩</small></span>
+        </button>`).join("")}
+      </div>
+      ${btn("to-quali", "예선 진행", { cls: "primary" })}
+    </div>
+  </div>`;
+}
+
+function viewQuali() {
+  const r = S.race, pole = r.quali[0].t;
+  const rows = r.quali.map((q, i) => {
+    const c = S.cars[q.id];
+    return `<tr class="${c.isPlayer ? "me" : ""}">
+      <td class="pos">${i + 1}</td>
+      <td><span class="drv"><span class="stripe" style="background:${TEAMS[c.team].color}"></span><span>${esc(c.name)}</span></span></td>
+      <td class="c-team muted">${teamName(c)}</td>
+      <td class="r num">${fmtLap(q.t)}</td>
+      <td class="r num ${i === 0 ? "purple" : "muted"}">${i === 0 ? "POLE" : "+" + (q.t - pole).toFixed(3)}</td>
+    </tr>`;
+  }).join("");
+  const me = player();
+  return `
+  <div class="row" style="justify-content:space-between"><div><span class="eyebrow">Qualifying</span><h2>예선 결과 · ${T().name}</h2></div>${weatherChip(r.weather[0])}</div>
+  <div class="panel tower-wrap"><table class="tower" style="min-width:0">
+    <thead><tr><th>P</th><th>드라이버</th><th class="c-team">팀</th><th class="r">랩타임</th><th class="r">차이</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+  <div class="row"><span>당신은 <b class="num">P${me.grid}</b>에서 출발합니다.</span>${btn("to-race", "그리드로 이동", { cls: "primary" })}</div>`;
+}
+
+function towerRows() {
+  const r = S.race;
+  const order = r.order.map((id) => S.cars[id]).filter((c) => !c.dnf);
+  const leader = order[0];
+  const rows = order.map((c, i) => {
+    const gap = i === 0 ? "리더" : "+" + (c.total - leader.total).toFixed(3);
+    const intv = i === 0 ? "" : "+" + (c.total - order[i - 1].total).toFixed(3);
+    const d = r.lap > 0 ? c.grid - (i + 1) : 0;
+    const delta = r.lap === 0 ? "" : d > 0 ? `<span class="good">▲${d}</span>` : d < 0 ? `<span class="bad">▼${-d}</span>` : `<span class="muted">–</span>`;
+    const flag = { PIT: '<span class="tag pit">PIT</span>', PNC: '<span class="tag pnc">PNC</span>', ERR: '<span class="tag err">ERR</span>' }[c.flag] || "";
+    const mode = c.mode === "push" ? '<span class="tag push">푸시</span>' : c.mode === "conserve" ? '<span class="tag save">세이브</span>' : "";
+    const fl = r.fastest && r.fastest.id === c.id ? ' <span class="purple" title="패스티스트 랩">◆</span>' : "";
+    return `<tr class="${c.isPlayer ? "me" : ""}">
+      <td class="pos">${i + 1}</td><td class="delta c-delta">${delta}</td>
+      <td><span class="drv"><span class="stripe" style="background:${TEAMS[c.team].color}"></span><span>${esc(c.name)}${fl}</span></span></td>
+      <td class="c-team muted">${teamName(c)}</td>
+      <td class="r num c-lead">${gap}</td><td class="r num muted">${intv}</td>
+      <td><span class="row" style="gap:6px;flex-wrap:nowrap">${tireChip(c.tire)}<span class="num muted">${c.tireAge}</span></span></td>
+      <td>${wearBar(c.wear)}</td>
+      <td class="r num">${c.pits}</td>
+      <td>${flag} ${mode}</td>
+    </tr>`;
+  }).join("");
+  const dnfs = S.cars.filter((c) => c.dnf).map((c) => `<tr class="dnf ${c.isPlayer ? "me" : ""}">
+      <td class="pos">–</td><td class="c-delta"></td><td><span class="drv"><span class="stripe" style="background:${TEAMS[c.team].color};opacity:.4"></span>${esc(c.name)}</span></td>
+      <td class="c-team">${teamName(c)}</td><td class="r num c-lead">DNF</td><td colspan="5">L${c.lapsDone} · ${c.dnf}</td></tr>`).join("");
+  return rows + dnfs;
+}
+
+function myCarPanel() {
+  const r = S.race, p = player();
+  if (p.dnf) return `<div class="panel mycar"><span class="eyebrow">내 차</span><div class="podium-msg bad">리타이어</div><p class="muted" style="margin:0">${esc(p.name)} · ${p.dnf} (L${p.lapsDone})</p></div>`;
+  const order = r.order.map((id) => S.cars[id]).filter((c) => !c.dnf);
+  const pos = order.indexOf(p);
+  const w = r.weather[r.lap];
+  const lapsLeft = r.laps - r.lap;
+  const rate = wearRate(p, p.tire, w);
+  const life = rate > 0 ? Math.max(0, (85 - p.wear) / rate) : 99;
+  const need = lapsLeft;
+  const fuelState = p.fuel >= need * 1.015 ? ["여유", "good"] : p.fuel >= need ? ["빠듯함", "warn"] : ["부족 · 세이브 필요", "bad"];
+  const fuelPct = Math.min(100, (p.fuel / (r.laps * 1.11)) * 100);
+  const ahead = pos > 0 ? `${esc(order[pos - 1].name)} <span class="num">+${(p.total - order[pos - 1].total).toFixed(3)}</span>` : '<span class="muted">선두</span>';
+  const behind = pos + 1 < order.length ? `${esc(order[pos + 1].name)} <span class="num">−${(order[pos + 1].total - p.total).toFixed(3)}</span>` : '<span class="muted">-</span>';
+  const fc = forecast();
+  const ruleOk = p.usedDry.length >= 2 || p.usedWet;
+  const rule = wetSoFar() ? '<span class="muted">비가 와서 면제</span>' : ruleOk ? '<span class="good">충족</span>' : '<span class="warn">미충족 · 위반 시 +20초</span>';
+  const fl = r.fastest ? `${esc(S.cars[r.fastest.id].name)} <span class="num purple">${fmtLap(r.fastest.t)}</span>` : "-";
+  return `
+  <div class="panel mycar">
+    <div class="top">
+      <div><span class="eyebrow">내 차 · ${esc(p.name)}</span><div class="bigpos">P${pos + 1}<small>/${order.length}</small></div></div>
+      <div class="muted" style="text-align:right;font-size:13px">${teamName(p)}<br>출발 P${p.grid} · 다운포스 ${DF[p.df].name}</div>
+    </div>
+    <dl class="kv">
+      <dt>타이어</dt><dd><span class="row" style="gap:8px">${tireChip(p.tire)} ${TIRES[p.tire]} <span class="muted num">${p.tireAge}랩</span> ${wearBar(p.wear)}</span><span class="muted" style="font-size:12px">현재 모드로 약 ${life.toFixed(0)}랩 더 버팀</span></dd>
+      <dt>연료</dt><dd><span class="num">${p.fuel.toFixed(1)}</span> <span class="muted">/ 남은 ${lapsLeft}랩 ≈ ${need.toFixed(1)}</span> <span class="${fuelState[1]}">${fuelState[0]}</span><div class="gauge"><i style="width:${fuelPct}%;background:var(--${fuelState[1]})"></i></div></dd>
+      <dt>랩타임</dt><dd class="num">${fmtLap(p.lastLap)} <span class="muted">베스트</span> ${fmtLap(p.bestLap)}</dd>
+      <dt>앞차</dt><dd>${ahead}</dd>
+      <dt>뒷차</dt><dd>${behind}</dd>
+      <dt>레이더</dt><dd class="${fc.cls}">${fc.text}</dd>
+      <dt>2종 규정</dt><dd>${rule}</dd>
+      <dt>최고 랩</dt><dd>${fl}</dd>
+    </dl>
+  </div>`;
+}
+
+function controlsPanel() {
+  const r = S.race, p = player(), ui = S.ui;
+  if (r.lap >= r.laps) {
+    return `<div class="panel controls"><span class="eyebrow">체커기</span>${btn("results", "최종 결과 보기", { cls: "primary" })}</div>`;
+  }
+  if (!r.started) {
+    return `<div class="panel lightsbox">${lightsHtml(Math.max(0, ui.lights))}
+      <p class="muted" style="margin:0">${ui.lights >= 0 ? "신호가 꺼지면 출발합니다…" : "그리드 정렬 완료. 준비되면 출발하세요."}</p>
+      ${btn("lights", "스타트", { cls: "primary", disabled: ui.lights >= 0 })}</div>`;
+  }
+  const busy = ui.playing;
+  const toast = ui.toast ? `<div class="toast" role="status">${esc(ui.toast)}</div>` : "";
+  if (p.dnf || r.playerAuto) {
+    return `<div class="panel controls">${toast}
+      <span class="muted">${p.dnf ? "리타이어했습니다. 레이스를 끝까지 지켜보세요." : "AI가 당신의 차를 운영 중입니다."}</span>
+      <div class="main">${btn("next", "다음 랩", { disabled: busy, kbd: "Space" })}${btn("play", busy ? "일시정지" : "끝까지 진행", { cls: busy ? "on" : "primary" })}</div></div>`;
+  }
+  const w = r.weather[r.lap], lapsLeft = r.laps - r.lap;
+  let pit = "";
+  if (p.pitReq) {
+    pit = `<div class="pitbox"><span>${tireChip(p.pitReq)} 다음 랩에 <b>${TIRES[p.pitReq]}</b>(으)로 피트인 예약됨</span>${btn("pit-cancel", "예약 취소")}</div>`;
+  } else if (ui.pitOpen) {
+    pit = `<div class="pitbox"><span class="eyebrow">피트인 · 현재 ${WEATHER[w].name} · 남은 ${lapsLeft}랩</span>
+      ${"SMHIW".split("").map((t) => {
+        const rate = wearRate(p, t, w);
+        return `<button class="pick" data-act="pit" data-v="${t}">${tireChip(t)}<span><b>${TIRES[t]}</b><small class="num">${TIRE_PACE[w][t] >= 0 ? "+" : ""}${TIRE_PACE[w][t].toFixed(1)}s · ${rate.toFixed(1)}%/랩 · 수명 ~${(85 / rate).toFixed(0)}랩</small></span><span></span></button>`;
+      }).join("")}
+      <span class="muted" style="font-size:12px">피트 손실 약 ${(T().pitLoss * (r.scLeft ? 0.45 : 1)).toFixed(0)}초 + 작업 2~3초${r.scLeft ? " · 세이프티카 중이라 저렴" : ""}</span>
+      ${btn("pit-close", "닫기", { kbd: "Esc" })}</div>`;
+  }
+  const quit = ui.quitConfirm
+    ? `<div class="pitbox"><span>정말 기권할까요?</span><div class="main">${btn("quit-yes", "기권", { cls: "danger" })}${btn("quit-no", "계속 달리기")}</div></div>`
+    : "";
+  return `
+  <div class="panel controls">
+    ${toast}
+    <span class="eyebrow">주행 모드</span>
+    <div class="seg">${["push", "normal", "conserve"].map((m, i) => `<button data-act="pmode" data-v="${m}" class="${p.mode === m ? "on" : ""}" title="${MODES[m].desc}">${MODES[m].name} <span class="num k" style="opacity:.6">${i + 1}</span></button>`).join("")}</div>
+    <span class="muted" style="font-size:12px">${MODES[p.mode].desc}</span>
+    <div class="main hide-m">
+      ${btn("next", "다음 랩", { cls: "primary", disabled: busy, kbd: "Space" })}
+      ${btn("play", busy ? "일시정지" : "자동 진행", { cls: busy ? "on" : "", kbd: "A" })}
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <div class="seg" style="flex:1">${Object.keys(SPEEDS).map((k) => `<button data-act="speed" data-v="${k}" class="${ui.speed === k ? "on" : ""}">${{ slow: "느리게", normal: "보통", fast: "빠르게" }[k]}</button>`).join("")}</div>
+    </div>
+    ${pit || btn("pit-open", "피트인", { kbd: "P", cls: "hide-m" })}
+    ${quit}
+    <div class="row">${btn("auto-all", "AI에게 맡기고 끝까지")}${btn("quit", "기권", { cls: "danger" })}</div>
+  </div>`;
+}
+
+function radioPanel() {
+  const ev = S.race.events.slice(-40).reverse();
+  return `<div class="panel radio"><span class="eyebrow">팀 라디오 · 레이스 컨트롤</span>
+    <ol>${ev.map((e) => `<li class="${e.me ? "me" : ""}"><span class="l">L${e.lap}</span><span class="ev-${e.kind}">${esc(e.msg)}</span></li>`).join("") || '<li><span></span><span class="muted">아직 메시지가 없습니다</span></li>'}</ol></div>`;
+}
+
+function viewRace() {
+  const r = S.race, w = r.weather[r.lap];
+  const done = r.lap >= r.laps;
+  const lapTxt = r.lap === 0 ? `<span class="lap">GRID <small>/ ${r.laps}랩</small></span>` : `<span class="lap">LAP ${r.lap}<small> / ${r.laps}</small></span>`;
+  return `
+  <header class="racehead">
+    ${lapTxt}
+    <div><span class="eyebrow">${S.season ? `Round ${S.season.round + 1}/${S.season.tracks.length}` : "Quick race"}</span><div><b>${T().name}</b></div></div>
+    ${weatherChip(w)}
+    ${r.scLeft > 0 ? '<span class="sc-banner">SAFETY CAR</span>' : ""}
+    ${done ? '<span class="flag-banner"><b>CHEQUERED FLAG</b></span>' : ""}
+  </header>
+  <div class="race-grid">
+    <div class="panel tower-wrap">
+      <table class="tower">
+        <thead><tr><th>P</th><th class="c-delta"></th><th>드라이버</th><th class="c-team">팀</th><th class="r c-lead">리더차</th><th class="r">앞차</th><th>타이어</th><th>마모</th><th class="r">피트</th><th>상태</th></tr></thead>
+        <tbody>${towerRows()}</tbody>
+      </table>
+    </div>
+    <aside class="side">
+      ${myCarPanel()}
+      ${controlsPanel()}
+      ${radioPanel()}
+    </aside>
+  </div>
+  ${mobileBar()}`;
+}
+
+function mobileBar() {
+  const r = S.race, p = player(), ui = S.ui;
+  if (r.lap >= r.laps) return `<nav class="mbar single">${btn("results", "최종 결과 보기", { cls: "primary" })}</nav>`;
+  if (!r.started) return `<nav class="mbar single">${btn("lights", ui.lights >= 0 ? "신호 대기…" : "스타트", { cls: "primary", disabled: ui.lights >= 0 })}</nav>`;
+  const busy = ui.playing;
+  const playBtn = btn("play", busy ? "일시정지" : "자동", { cls: busy ? "on" : "" });
+  if (p.dnf || r.playerAuto) return `<nav class="mbar">${btn("next", "다음 랩", { disabled: busy })}${btn("play", busy ? "일시정지" : "끝까지 진행", { cls: busy ? "on" : "primary" })}<span></span></nav>`;
+  const pitBtn = p.pitReq ? btn("pit-cancel", `피트 취소`) : btn(ui.pitOpen ? "pit-close" : "pit-open", ui.pitOpen ? "닫기" : "피트인", { cls: ui.pitOpen ? "on" : "" });
+  return `<nav class="mbar">${pitBtn}${btn("next", "다음 랩", { cls: "primary", disabled: busy })}${playBtn}</nav>`;
+}
+
+function viewResults() {
+  const r = S.race, cl = r.classified.map((id) => S.cars[id]);
+  const win = cl[0], winT = win.total + win.penalty;
+  const rows = cl.map((c, i) => {
+    const rec = c.dnf ? '<span class="bad">DNF</span>' : i === 0 ? fmtLap(winT) : "+" + (c.total + c.penalty - winT).toFixed(3);
+    const best = r.fastest && r.fastest.id === c.id ? `<span class="purple">${fmtLap(c.bestLap)}</span>` : fmtLap(c.bestLap);
+    const medal = !c.dnf && i < 3 ? ["🥇", "🥈", "🥉"][i] : "";
+    return `<tr class="${c.isPlayer ? "me" : ""} ${c.dnf ? "dnf" : ""}">
+      <td class="pos">${i + 1}</td>
+      <td><span class="drv"><span class="stripe" style="background:${TEAMS[c.team].color}"></span><span>${esc(c.name)} ${medal}</span></span></td>
+      <td class="c-team muted">${teamName(c)}</td>
+      <td class="r num">${rec}${c.penalty ? '<span class="warn">*</span>' : ""}</td>
+      <td class="r num muted">P${c.grid}</td><td class="r num">${c.pits}</td>
+      <td class="num">${best}</td>
+      <td class="r num good">${c.racePoints ? "+" + c.racePoints : ""}</td>
+    </tr>`;
+  }).join("");
+  const p = player(), pos = cl.indexOf(p) + 1;
+  let msg;
+  if (p.dnf) msg = `<span class="bad">리타이어 · ${p.dnf}</span>`;
+  else if (pos === 1) msg = `<span style="color:var(--accent)">우승! 완벽한 레이스였습니다</span>`;
+  else if (pos <= 3) msg = `<span class="good">포디움 달성 · P${pos}</span> <span class="muted">(출발 P${p.grid})</span>`;
+  else msg = `P${pos} 완주 <span class="muted">(출발 P${p.grid}) · ${p.racePoints}포인트</span>`;
+  const next = S.season
+    ? btn("standings", "챔피언십 순위 보기", { cls: "primary" })
+    : btn("again", "같은 설정으로 다시", { cls: "primary" }) + btn("go", "메인 메뉴", { v: "menu" });
+  return `
+  <div class="stack">
+    <span class="eyebrow">Classification · ${T().name} · ${r.laps}랩</span>
+    <div class="podium-msg">${msg}</div>
+  </div>
+  <div class="panel tower-wrap"><table class="tower">
+    <thead><tr><th>P</th><th>드라이버</th><th class="c-team">팀</th><th class="r">기록</th><th class="r">출발</th><th class="r">피트</th><th>베스트 랩</th><th class="r">포인트</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+  <div class="row muted" style="font-size:13px">
+    ${r.fastest ? `<span>패스티스트 랩 <span class="purple num">${fmtLap(r.fastest.t)}</span> · ${esc(S.cars[r.fastest.id].name)} (L${r.fastest.lap})</span>` : ""}
+    ${cl.some((c) => c.penalty) ? '<span class="warn">* 드라이 컴파운드 2종 미사용 +20초 포함</span>' : ""}
+  </div>
+  <div class="row">${next}</div>`;
+}
+
+function viewStandings() {
+  const s = S.season, last = s.round + 1 >= s.tracks.length;
+  const drivers = [...S.cars].sort((a, b) => b.points - a.points || b.wins - a.wins);
+  const teams = TEAMS.map((t, i) => ({ t, pts: S.cars.filter((c) => c.team === i).reduce((x, c) => x + c.points, 0) })).sort((a, b) => b.pts - a.pts);
+  const champ = drivers[0], p = player(), prank = drivers.indexOf(p) + 1;
+  const headline = last
+    ? champ.isPlayer
+      ? `<div class="podium-msg" style="color:var(--accent)">${esc(champ.name)}, 월드 챔피언 등극!</div>`
+      : `<div class="podium-msg">챔피언: ${esc(champ.name)} <span class="muted" style="font-size:18px">${teamName(champ)} · ${champ.points}점</span></div><p style="margin:0">당신의 시즌 최종 순위: <b class="num">P${prank}</b> (${p.points}점)</p>`
+    : `<h2>챔피언십 순위 <span class="muted" style="font-size:16px">Round ${s.round + 1}/${s.tracks.length} 종료</span></h2>
+       <p class="muted" style="margin:0">다음: ${TRACKS[s.tracks[s.round + 1]].name}</p>`;
+  return `
+  <div class="stack">${headline}</div>
+  <div class="two-col">
+    <div class="panel tower-wrap"><table class="tower" style="min-width:0">
+      <thead><tr><th>P</th><th>드라이버</th><th class="c-team">팀</th><th class="r">승</th><th class="r">포인트</th></tr></thead>
+      <tbody>${drivers.map((c, i) => `<tr class="${c.isPlayer ? "me" : ""}"><td class="pos">${i + 1}</td>
+        <td><span class="drv"><span class="stripe" style="background:${TEAMS[c.team].color}"></span>${esc(c.name)}</span></td>
+        <td class="c-team muted">${teamName(c)}</td><td class="r num muted">${c.wins || ""}</td><td class="r num"><b>${c.points}</b></td></tr>`).join("")}</tbody></table></div>
+    <div class="panel tower-wrap"><table class="tower" style="min-width:0">
+      <thead><tr><th>P</th><th>컨스트럭터</th><th class="r">포인트</th></tr></thead>
+      <tbody>${teams.map((x, i) => `<tr class="${x.t === TEAMS[p.team] ? "me" : ""}"><td class="pos">${i + 1}</td>
+        <td><span class="drv"><span class="stripe" style="background:${x.t.color}"></span>${x.t.name}</span></td><td class="r num"><b>${x.pts}</b></td></tr>`).join("")}</tbody></table></div>
+  </div>
+  <div class="row">${last ? btn("go", "메인 메뉴", { v: "menu", cls: "primary" }) : btn("next-round", "다음 라운드", { cls: "primary" })}</div>`;
+}
+
+// ═══════════════ 입력 ═══════════════
+function act(a, v) {
+  const ui = S.ui;
+  if (a !== "speed") ui.toast = "";
+  switch (a) {
+    case "go": S.screen = v; break;
+    case "mode": S.mode = v; S.screen = "setup"; break;
+    case "cfg-track": S.cfg.track = +v; S.cfg.laps = TRACKS[+v].laps; break;
+    case "cfg-team": S.cfg.team = +v; break;
+    case "cfg-diff": S.cfg.diff = v; break;
+    case "cfg-races": S.cfg.races = +v; break;
+    case "start-setup": {
+      const nm = (S.cfg.name || "").trim().slice(0, 14) || "YOU";
+      S.cfg.name = nm;
+      S.cars = buildField(nm, S.cfg.team, S.cfg.diff);
+      if (S.mode === "season") {
+        S.season = { tracks: TRACKS.slice(0, S.cfg.races).map((_, i) => i), round: 0 };
+        newRace(0, TRACKS[0].laps);
+      } else {
+        S.season = null;
+        newRace(S.cfg.track, S.cfg.laps);
+      }
+      S.screen = "race-setup";
+      break;
+    }
+    case "again":
+      S.cars = buildField(S.cfg.name, S.cfg.team, S.cfg.diff);
+      newRace(S.cfg.track, S.cfg.laps);
+      S.screen = "race-setup";
+      break;
+    case "rs-df": S.race.pending.df = v; break;
+    case "rs-fuel": S.race.pending.fuel = v; break;
+    case "rs-tire": S.race.pending.tire = v; break;
+    case "to-quali": applyPlayerSetup(); aiSetup(); qualify(); S.screen = "quali"; break;
+    case "to-race": S.screen = "race"; break;
+    case "lights": if (S.ui.lights < 0) { runLights(); return; } break;
+    case "next": if (!ui.playing && S.race.started) { const al = stepLap(); if (al.length && !S.race.playerAuto) ui.toast = al.join(", "); } break;
+    case "play": setPlaying(!ui.playing); return;
+    case "speed": ui.speed = v; break;
+    case "pmode": player().mode = v; break;
+    case "pit-open":
+      ui.pitOpen = true;
+      render();
+      document.querySelector(".pitbox")?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    case "pit-close": ui.pitOpen = false; break;
+    case "pit": player().pitReq = v; ui.pitOpen = false; break;
+    case "pit-cancel": player().pitReq = null; break;
+    case "auto-all": S.race.playerAuto = true; ui.pitOpen = false; setPlaying(true); return;
+    case "quit": ui.quitConfirm = true; break;
+    case "quit-no": ui.quitConfirm = false; break;
+    case "quit-yes": {
+      const p = player();
+      p.dnf = "기권"; p.lapsDone = S.race.lap;
+      log(`${p.name} 기권`, "bad", true);
+      ui.quitConfirm = false;
+      S.race.order = running().map((c) => c.id);
+      break;
+    }
+    case "results": clearTimeout(timer); ui.playing = false; S.screen = "results"; window.scrollTo(0, 0); break;
+    case "standings": S.screen = "standings"; window.scrollTo(0, 0); break;
+    case "next-round": {
+      S.season.round++;
+      const ti = S.season.tracks[S.season.round];
+      newRace(ti, TRACKS[ti].laps);
+      S.screen = "race-setup";
+      window.scrollTo(0, 0);
+      break;
+    }
+  }
+  render();
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]");
+  if (!b || b.disabled) return;
+  act(b.dataset.act, b.dataset.v);
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "pname") S.cfg.name = e.target.value;
+  if (e.target.id === "laps") {
+    const n = parseInt(e.target.value, 10);
+    if (!isNaN(n)) S.cfg.laps = Math.max(5, Math.min(60, n));
+  }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.id === "laps") { e.target.value = S.cfg.laps; }
+});
+document.addEventListener("keydown", (e) => {
+  if (S.screen !== "race" || !S.race) return;
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "input") return;
+  if (tag === "button" && (e.key === "Enter" || e.key === " ")) return;
+  const r = S.race, p = player();
+  if (!r.started || r.lap >= r.laps) return;
+  const k = e.key.toLowerCase();
+  if (k === " " || k === "enter") { e.preventDefault(); act("next"); }
+  else if (k === "a") act("play");
+  else if (p.dnf || r.playerAuto) return;
+  else if (k === "1") act("pmode", "push");
+  else if (k === "2") act("pmode", "normal");
+  else if (k === "3") act("pmode", "conserve");
+  else if (k === "p") act("pit-open");
+  else if (k === "escape") act("pit-close");
+});
+
+// ═══════════════ 시작 ═══════════════
+function start(data) {
+  S = data && data.screen ? data : freshState();
+  S.ui.playing = false;
+  if (S.ui.lights >= 0 && S.race && !S.race.started) S.ui.lights = -1;
+  render();
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
