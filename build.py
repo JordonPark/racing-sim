@@ -35,7 +35,9 @@ def main():
         out = DIST / rel
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(src, encoding="utf-8")
-    for p in sorted(DIST.rglob("*.html")):
+    for vendor in ROOT.glob("*/vendor"):
+        shutil.copytree(vendor, DIST / vendor.relative_to(ROOT))
+    for p in sorted(DIST.rglob("*.html")) + sorted(DIST.rglob("vendor/*.js")):
         print(p.relative_to(ROOT), p.stat().st_size, "bytes")
 
 

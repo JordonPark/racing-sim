@@ -153,6 +153,31 @@ h3 { margin: 14px 0 8px; font-size: 18px; font-weight: 400; color: #5a4c78; }
 }
 #feed div { background: rgba(29, 18, 53, .78); color: #fff; padding: 4px 10px; border-radius: 10px; border-left: 5px solid var(--sky); animation: feedin .25s ease-out; }
 #feed div.good { border-left-color: var(--leaf); } #feed div.bad { border-left-color: var(--berry); } #feed div.item { border-left-color: var(--sun); }
+#caster {
+  position: absolute; top: calc(104px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+  width: min(560px, calc(100vw - 24px)); display: flex; gap: 6px; align-items: flex-start; pointer-events: none;
+}
+#caster canvas { width: 46px; height: 46px; flex: none; }
+#caster .bubble {
+  flex: 1; min-width: 0; background: var(--cream); color: var(--ink); border: 3px solid var(--ink); border-radius: 16px;
+  box-shadow: 0 4px 0 var(--ink); padding: 5px 12px 7px; font-size: 16px; line-height: 1.4;
+}
+#caster .who { font-size: 12px; color: #6b5d87; display: flex; gap: 6px; align-items: center; }
+#caster .tag { font-size: 11px; background: var(--grape); color: #fff; border-radius: 6px; padding: 0 6px; }
+#caster .tag.basic { background: #b6a8cf; }
+#caster .dots { display: none; gap: 4px; padding: 6px 0 2px; }
+#caster.thinking .dots { display: inline-flex; }
+#caster.thinking #castText { display: none; }
+#caster .dots b { width: 7px; height: 7px; border-radius: 50%; background: var(--grape); animation: blink 1s infinite; }
+#caster .dots b:nth-child(2) { animation-delay: .15s; } #caster .dots b:nth-child(3) { animation-delay: .3s; }
+@keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+.castbox { background: #fff; border: 3px solid var(--ink); border-radius: 16px; padding: 12px; display: grid; gap: 8px; margin-top: 4px; }
+.castbox input[type=password] { font: inherit; font-size: 15px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 10px; width: 100%; background: #fffdf8; color: var(--ink); }
+.castbox small { color: #6b5d87; font-size: 13px; line-height: 1.45; }
+#wrapup { margin-top: 12px; background: #fff; border: 3px dashed var(--grape); border-radius: 14px; padding: 8px 12px; display: flex; gap: 8px; align-items: flex-start; font-size: 15px; }
+#wrapup canvas { width: 40px; height: 40px; flex: none; }
+@media (max-width: 640px) { #caster { left: 12px; transform: none; width: calc(100vw - 120px); } }
+@media (max-height: 500px) { #caster { top: calc(92px + env(safe-area-inset-top, 0px)); left: 12px; transform: none; width: min(420px, 48vw); } #caster .bubble { font-size: 14px; } }
 @keyframes feedin { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
 .setup2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
 .hint { margin: 6px 0 0; font-size: 13px; color: #6b5d87; }
@@ -205,6 +230,10 @@ h3 { margin: 14px 0 8px; font-size: 18px; font-weight: 400; color: #5a4c78; }
   </div>
   <div id="banner" class="stroke"></div>
   <div id="warn" class="stroke">거꾸로 가고 있어요!</div>
+  <div id="caster" hidden aria-live="polite">
+    <canvas id="casterFace" width="92" height="92" aria-hidden="true"></canvas>
+    <div class="bubble"><div class="who">꼬꼬 캐스터 <span id="castTag" class="tag">AI 해설</span></div><span id="castText"></span><i class="dots"><b></b><b></b><b></b></i></div>
+  </div>
   <div id="feed" aria-live="polite"></div>
   <div id="panel">
     <div class="pgroup lab"><span class="plabel">주행</span><div class="seg mini" id="segStyle">
@@ -267,7 +296,7 @@ const ITEM_NAME = { nitro: "니트로", triple: "니트로 ×3", oil: "오일 �
 // ═════════════ 설정 / 상태 ═════════════
 const S = {
   state: "attract",
-  sel: { racer: 2, cc: 100, mode: "race", track: 0, sound: true, engine: "mid", tire: "std", style: "balanced", plan: "balanced", speed: 1, cam: "chase", autoItem: true },
+  sel: { racer: 2, cc: 100, mode: "race", track: 0, sound: true, engine: "mid", tire: "std", style: "balanced", plan: "balanced", speed: 1, cam: "chase", autoItem: true, cast: "basic", castModel: "claude-opus-5-5", castVoice: false },
   gp: null,
   trackIdx: 0,
   paused: false,
@@ -517,11 +546,13 @@ function useItem(k) {
     if (hazards.length > 14) hazards.shift();
     if (k.isPlayer) sfx(300, 120, 0.2, "square", 0.08);
   } else if (it === "rocket") {
+    castEvent(`${k.racer.name}(${k.rank}위)가 추적 로켓 발사`, k.isPlayer || k.rank <= 4 ? 2 : 1);
     const ahead = K.filter((o) => o !== k && !o.finished && o.prog > k.prog).sort((a, b) => a.prog - b.prog)[0] || null;
     rockets.push({ owner: k, target: ahead, prog: k.prog + 2, lat: latOf(k.x, k.z, k.idx), t: 0, x: k.x, z: k.z, ang: 0 });
     if (k.isPlayer) sfx(500, 1400, 0.3, "sawtooth", 0.1);
   } else if (it === "shield") {
     k.shieldT = 7;
+    if (k.isPlayer || k.rank <= 2) castEvent(`${k.racer.name}(${k.rank}위)가 방패 버블을 켰다`, 1);
     if (k.isPlayer) sfx(400, 800, 0.25, "sine", 0.15);
   }
   k.uses--;
@@ -535,6 +566,7 @@ function hitKart(k, by) {
   k.speed *= 0.35;
   k.drift = 0; k.driftT = 0; k.boostT = 0;
   k.gems = Math.max(0, k.gems - 2);
+  castEvent(by ? `${by.racer.name}의 공격에 ${k.racer.name}(${k.rank}위)가 빙글빙글 스핀` : `${k.racer.name}(${k.rank}위)가 미끄러져 스핀`, k.isPlayer || k.rank <= 3 || (by && by.isPlayer) ? 2 : 1);
   if (k.isPlayer) { sfx(400, 80, 0.45, "square", 0.15); vibrate(80); radio(by ? `${by.racer.name}의 공격에 맞았다!` : "미끄러졌다!", "bad"); }
   else if (by && by.isPlayer) radio(`명중! ${k.racer.name} 스핀`, "good");
   return true;
@@ -543,6 +575,7 @@ function hitKart(k, by) {
 // ═════════════ 물리 ═════════════
 function releaseDrift(k) {
   const lvl = k.driftT > 3 ? 3 : k.driftT > 2 ? 2 : k.driftT > 1 ? 1 : 0;
+  if (lvl === 3 && (k.rank <= 3 || k.isPlayer)) castEvent(`${k.racer.name}(${k.rank}위) 보라색 드리프트 부스트 폭발`, 1);
   if (lvl) {
     k.boostT = Math.max(k.boostT, [0, 0.6, 1.0, 1.5][lvl]);
     k.speed += [0, 3, 5, 7][lvl];
@@ -627,6 +660,8 @@ function onLap(k) {
   if (k.lap > LAPS && !k.finished) {
     k.finished = true;
     k.finishTime = S.raceTime;
+    const place = K.filter((o) => o.finished).length;
+    if (place === 1 || k.isPlayer) castEvent(place === 1 ? `${k.racer.name} 1위로 결승선 통과! 우승` : `${k.racer.name} ${place}위로 결승선 통과`, 3);
     if (k.isPlayer) playerFinished();
     return;
   }
@@ -674,6 +709,7 @@ function aiControl(k, dt) {
   // 무리한 드리프트는 실수로 이어질 수 있음
   if (k.drift && k.spinT <= 0 && S.state !== "attract" && Math.random() < dt * ST.mistake * (1 + Math.abs(curve))) {
     k.spinT = 0.6; k.speed *= 0.6; k.drift = 0; k.driftT = 0; k.mistakes++;
+    castEvent(`${k.racer.name}(${k.rank}위)가 무리한 드리프트로 코스 이탈`, k.isPlayer || k.rank <= 3 ? 2 : 1);
     if (k.isPlayer) radio(`${k.racer.name}: 코스 이탈! 무리했어요`, "bad");
   }
 
@@ -939,6 +975,17 @@ function viewSelect() {
       <div><h3>출발 주행 스타일</h3><div class="seg">${Object.entries(STYLES).map(([k, t]) => `<button data-a="style" data-v="${k}" class="${s.style === k ? "on" : ""}">${t.name}</button>`).join("")}</div><p class="hint">공격: 빠르지만 실수 잦음 · 안정: 느리지만 실수 거의 없음</p></div>
       <div><h3>출발 아이템 전략</h3><div class="seg">${Object.entries(PLANS).map(([k, t]) => `<button data-a="plan" data-v="${k}" class="${s.plan === k ? "on" : ""}">${t}</button>`).join("")}</div><p class="hint">방어: 방패·오일은 위기 때까지, 니트로는 막판에</p></div>
     </div>
+    <h3>레이스 해설 <span style="font-size:13px">꼬꼬 캐스터가 레이스를 중계해요</span></h3>
+    <div class="seg">${[["off", "끄기"], ["basic", "기본 해설"], ["ai", "AI 해설 (Claude)"]].map(([k, n]) => `<button data-a="cast" data-v="${k}" class="${s.cast === k ? "on" : ""}">${n}</button>`).join("")}</div>
+    ${s.cast === "ai" ? `<div class="castbox">
+      <label for="apiKey" style="font-size:15px">Anthropic API 키</label>
+      <input type="password" id="apiKey" autocomplete="off" spellcheck="false" placeholder="sk-ant-..." value="${getKey().replace(/"/g, "")}">
+      <small>키는 <b>이 브라우저에만</b> 저장되고, 해설을 만들 때 Anthropic API로만 전송돼요. 여러 사람이 같이 쓰는 기기에서는 입력하지 마세요. 키가 없거나 오류가 나면 기본 해설로 바뀌어요.</small>
+      <div class="seg">${Object.entries(CAST_MODELS).map(([k, m]) => `<button data-a="castModel" data-v="${k}" class="${s.castModel === k ? "on" : ""}">${m.name}</button>`).join("")}</div>
+      <small>${(CAST_MODELS[s.castModel] || CAST_MODELS["claude-opus-5-5"]).note} · 해설은 약 5초마다 한 번씩 요청해요</small>
+      <div class="row" style="justify-content:flex-start"><button class="tbtn mini alt" data-a="castTest">연결 테스트</button><small id="castTest"></small></div>
+    </div>` : ""}
+    ${s.cast !== "off" ? `<label class="check" style="margin-top:8px"><input type="checkbox" id="optVoice" ${s.castVoice ? "checked" : ""}> 해설 음성으로 읽기</label>` : ""}
     <h3>옵션</h3>
     <div class="row" style="justify-content:flex-start">
       <label class="check"><input type="checkbox" id="optAuto" ${s.autoItem ? "checked" : ""}> 아이템 자동 사용</label>
@@ -987,6 +1034,7 @@ function viewPause() {
       <button class="tbtn" data-a="resume">계속하기</button>
       <button class="tbtn alt" data-a="restart">처음부터 다시</button>
       <label class="check"><input type="checkbox" id="optSound" ${S.sel.sound ? "checked" : ""}> 효과음</label>
+      ${S.sel.cast !== "off" ? `<label class="check"><input type="checkbox" id="optVoice" ${S.sel.castVoice ? "checked" : ""}> 해설 음성으로 읽기</label>` : ""}
       <button class="tbtn pink" data-a="quit">메뉴로 나가기</button>
     </div>
   </div>`, true);
@@ -1020,10 +1068,13 @@ function viewResults() {
     <h2>${TRACKS[TR.idx].name} · ${msg}</h2>
     <table class="res"><tbody>${rows}</tbody></table>
     ${res.some((k) => !k.finished) ? '<p style="margin:8px 0 0;font-size:13px;opacity:.7">* 표시는 완주 전이라 예상 기록입니다.</p>' : ""}
+    ${S.sel.cast === "ai" && getKey() && !CAST.err ? '<div id="wrapup"><canvas width="80" height="80" aria-hidden="true"></canvas><span>꼬꼬가 총평을 쓰는 중…</span></div>' : ""}
     <div class="row" style="margin-top:16px;justify-content:space-between">
       ${gp ? gpHtml : `<button class="tbtn alt" data-a="title">메뉴</button><button class="tbtn pink" data-a="restart">다시 달리기</button>`}
     </div>
   </div>`, true);
+  const wu = document.querySelector("#wrapup canvas");
+  if (wu) { drawCasterFace(wu); castWrapUp(res); }
 }
 function viewGpFinal() {
   const pts = S.gp.points;
@@ -1051,7 +1102,8 @@ UI.addEventListener("click", (e) => {
   else if (a === "cc") { S.sel.cc = +v; saveSel(); viewSelect(); }
   else if (a === "mode") { S.sel.mode = v; saveSel(); viewSelect(); }
   else if (a === "track") { S.sel.track = +v; saveSel(); viewSelect(); }
-  else if (a === "engine" || a === "tire" || a === "style" || a === "plan") { S.sel[a] = v; saveSel(); viewSelect(); }
+  else if (a === "engine" || a === "tire" || a === "style" || a === "plan" || a === "cast" || a === "castModel") { S.sel[a] = v; saveSel(); if (a === "castModel") CAST.client = null; CAST.err = ""; viewSelect(); }
+  else if (a === "castTest") testCast();
   else if (a === "go") {
     if (S.sel.mode === "gp") { S.gp = { round: 0, points: {} }; startRace(0); }
     else { S.gp = null; startRace(S.sel.track); }
@@ -1065,7 +1117,232 @@ UI.addEventListener("click", (e) => {
 UI.addEventListener("change", (e) => {
   if (e.target.id === "optSound") { setSound(e.target.checked); initAudio(); }
   if (e.target.id === "optAuto") { S.sel.autoItem = e.target.checked; saveSel(); }
+  if (e.target.id === "optVoice") { S.sel.castVoice = e.target.checked; saveSel(); if (!e.target.checked) { try { speechSynthesis.cancel(); } catch (x) { /* 미지원 */ } } }
+  if (e.target.id === "apiKey") { setKey(e.target.value.trim()); CAST.err = ""; }
 });
+
+// ═════════════ 해설 (꼬꼬 캐스터) ═════════════
+// mode: off | basic(규칙 기반) | ai(Claude API, 사용자 키로 브라우저에서 직접 호출)
+const CAST_MODELS = {
+  "claude-opus-5-5": { name: "Opus 5.5", note: "기본 · 가장 똑똑함 · 레이스당 약 100원(추정)" },
+  "claude-sonnet-5-5": { name: "Sonnet 5.5", note: "레이스당 약 50원(추정)" },
+  "claude-haiku-5-5": { name: "Haiku 5.5", note: "가장 빠르고 저렴 · 레이스당 약 2원(추정)" },
+};
+const SDK_SRC = "vendor/anthropic-sdk-1.4.0.js";
+const KEY_STORE = "tkr2d-apikey";
+const CAST_SYSTEM = [
+  "너는 동물 친구들이 달리는 귀여운 카트 레이스 게임 '꼬마 카트 랠리'의 생중계 캐스터 '꼬꼬'(병아리)다.",
+  "입력으로 지금 레이스 현황과 최근 사건이 주어진다. 지금 이 순간을 중계하는 한국어 해설을 1~2문장, 70자 이내로 말해라.",
+  "신나고 귀엽게 말하되, 주어진 정보에 있는 사실만 말하고 없는 사건이나 숫자를 지어내지 마라.",
+  "시청자는 '감독'으로 표시된 팀의 감독이다. 그 레이서 소식이 있으면 우선 다루고 살짝 응원해라.",
+  "가장 최근 사건을 중심으로 말하고, 새 사건이 없으면 순위 경쟁이나 격차를 짚어라.",
+  "직전 해설과 같은 표현을 반복하지 마라. 이모지, 따옴표, 머리말 없이 해설 문장만 출력해라.",
+].join("\n");
+
+const CAST = { busy: false, lastReal: -1e9, events: [], lastText: "", seen: 0, client: null, sdk: null, err: "", leaderId: -1, leaderLap: 0, typing: null, hideAt: 0 };
+const getKey = () => { try { return localStorage.getItem(KEY_STORE) || ""; } catch (e) { return ""; } };
+const setKey = (v) => { try { v ? localStorage.setItem(KEY_STORE, v) : localStorage.removeItem(KEY_STORE); } catch (e) { /* 저장 불가 */ } CAST.client = null; };
+
+function castEvent(text, prio) {
+  if (S.sel.cast === "off" || S.state === "attract") return;
+  CAST.events.push({ t: S.raceTime, text, prio, id: ++CAST.seq });
+  if (CAST.events.length > 14) CAST.events.shift();
+}
+CAST.seq = 0;
+function castReset() {
+  CAST.events = []; CAST.lastText = ""; CAST.seen = 0; CAST.err = ""; CAST.lastReal = -1e9;
+  CAST.leaderId = -1; CAST.leaderLap = 0; CAST.gen = (CAST.gen || 0) + 1; CAST.busy = false;
+  try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) { /* 미지원 */ }
+  $("caster").hidden = true;
+}
+
+function loadSDK() {
+  if (window.Anthropic) return Promise.resolve(window.Anthropic);
+  if (!CAST.sdk) {
+    CAST.sdk = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = SDK_SRC;
+      s.onload = () => (window.Anthropic ? resolve(window.Anthropic) : reject(new Error("SDK 없음")));
+      s.onerror = () => { CAST.sdk = null; reject(new Error("SDK 파일을 불러오지 못했어요")); };
+      document.head.appendChild(s);
+    });
+  }
+  return CAST.sdk;
+}
+async function getClient() {
+  const key = getKey();
+  if (!key) throw new Error("NO_KEY");
+  const Anthropic = await loadSDK();
+  if (!CAST.client) CAST.client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true, maxRetries: 1, timeout: 20000 });
+  return CAST.client;
+}
+function castErrorText(e) {
+  const A = window.Anthropic;
+  if (e && e.message === "NO_KEY") return "API 키가 없어요";
+  if (A) {
+    if (e instanceof A.AuthenticationError) return "API 키가 올바르지 않아요";
+    if (e instanceof A.PermissionDeniedError) return "이 키로는 이 모델을 쓸 수 없어요";
+    if (e instanceof A.NotFoundError) return "모델을 찾을 수 없어요";
+    if (e instanceof A.RateLimitError) return "요청이 너무 많아요. 잠시 쉬었다 할게요";
+    if (e instanceof A.APIConnectionError) return "네트워크 연결에 실패했어요";
+    if (e instanceof A.APIError) return `API 오류 (${e.status ?? "?"})`;
+  }
+  return (e && e.message) || "알 수 없는 오류";
+}
+
+// Claude Messages API 호출 (짧은 해설)
+async function askClaude(userText, maxChars) {
+  const client = await getClient();
+  const model = CAST_MODELS[S.sel.castModel] ? S.sel.castModel : "claude-opus-5-5";
+  const params = {
+    model,
+    max_tokens: 1024,
+    output_config: { effort: "low" },
+    system: CAST_SYSTEM,
+    messages: [{ role: "user", content: userText }],
+  };
+  // Opus/Sonnet 5.5: 거절 시 서버 측 대체 모델로 자동 재시도
+  const res = model === "claude-haiku-5-5"
+    ? await client.messages.create(params)
+    : await client.beta.messages.create({ ...params, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
+  if (res.stop_reason === "refusal") return "";
+  const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join(" ").replace(/["“”]/g, "").replace(/\s+/g, " ").trim();
+  return text.slice(0, maxChars);
+}
+
+function raceSnapshot() {
+  const order = [...K].sort((a, b) => a.rank - b.rank);
+  const leader = order[0], avg = Math.max(10, S.ccMax * 0.85);
+  const lines = order.map((k) => {
+    const gap = k === leader ? "" : ` +${(((leader.prog - k.prog) * 2) / avg).toFixed(1)}초`;
+    const tag = k.isPlayer ? " [감독 팀]" : "";
+    const st = k.finished ? " (완주)" : k.spinT > 0 ? " (스핀 중)" : k.shieldT > 0 ? " (방패)" : k.boostT > 0 ? " (부스트)" : "";
+    return `${k.rank}. ${k.racer.name}(${k.racer.animal})${tag}${gap}${st}`;
+  });
+  return { leader, lines };
+}
+function buildPrompt(fresh) {
+  const { leader, lines } = raceSnapshot();
+  const lap = clamp(leader.lap, 1, LAPS);
+  const ev = fresh.length ? fresh.map((e) => `- ${fmtTime(e.t)} ${e.text}`).join("\n") : "- (새 사건 없음)";
+  return [
+    `코스: ${TRACKS[TR.idx].name} / 선두 기준 ${lap}랩째 (총 ${LAPS}랩) / 경과 ${fmtTime(S.raceTime)}`,
+    `순위:\n${lines.join("\n")}`,
+    `감독 팀 레이서: ${player.racer.name} ${player.rank}위, 아이템 ${player.item ? ITEM_NAME[player.item] : "없음"}, 지시: ${STYLES[S.sel.style].name} 주행 / 아이템 ${PLANS[S.sel.plan]}`,
+    `최근 사건:\n${ev}`,
+    `직전 해설: ${CAST.lastText || "(없음)"}`,
+  ].join("\n");
+}
+
+const BASIC_OPEN = ["와!", "오오,", "지금!", "보셨나요?", "이야~", "놓치지 마세요,"];
+function basicLine(fresh) {
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  if (fresh.length) {
+    const e = fresh.reduce((a, b) => (b.prio >= a.prio ? b : a));
+    return `${pick(BASIC_OPEN)} ${e.text}!`;
+  }
+  const { leader } = raceSnapshot();
+  const second = K.find((k) => k.rank === 2);
+  const avg = Math.max(10, S.ccMax * 0.85);
+  const gap = second ? (((leader.prog - second.prog) * 2) / avg).toFixed(1) : "0";
+  return pick([
+    `현재 선두는 ${leader.racer.name}! ${second ? second.racer.name + "가 " + gap + "초 차로 쫓고 있어요" : ""}`,
+    `${player.racer.name}, 지금 ${player.rank}위로 달리는 중이에요. 힘내요!`,
+    `${leader.racer.name}의 리드가 이어지고 있어요. 역전이 나올까요?`,
+  ]);
+}
+
+function showCast(text, ai) {
+  if (!text) return;
+  CAST.lastText = text;
+  const box = $("caster");
+  box.hidden = false;
+  box.classList.remove("thinking");
+  $("castTag").textContent = ai ? "AI 해설" : "기본 해설";
+  $("castTag").className = "tag" + (ai ? "" : " basic");
+  const el = $("castText");
+  let i = 0;
+  clearInterval(CAST.typing);
+  CAST.typing = setInterval(() => { i += 2; el.textContent = text.slice(0, i); if (i >= text.length) clearInterval(CAST.typing); }, 28);
+  CAST.hideAt = performance.now() + 7000 + text.length * 60;
+  if (S.sel.castVoice && window.speechSynthesis) {
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ko-KR"; u.rate = 1.12; u.pitch = 1.35;
+      speechSynthesis.speak(u);
+    } catch (e) { /* 음성 미지원 */ }
+  }
+}
+
+function castTick() {
+  const box = $("caster");
+  if (!box.hidden && !CAST.busy && performance.now() > CAST.hideAt) box.hidden = true;
+  if (S.sel.cast === "off" || !player || CAST.busy || S.paused) return;
+  if (S.state !== "race" && S.state !== "finish") return;
+  const now = performance.now();
+  const fresh = CAST.events.filter((e) => e.id > CAST.seen);
+  const hot = fresh.some((e) => e.prio >= 2);
+  const ai = S.sel.cast === "ai" && getKey() && !CAST.err;
+  const gap = ai ? 5500 : 3500;
+  if (now - CAST.lastReal < gap) return;
+  if (!hot && now - CAST.lastReal < 14000) return;
+  CAST.lastReal = now;
+  CAST.seen = CAST.seq;
+  const recent = fresh.slice(-6);
+  if (!ai) { showCast(basicLine(recent), false); return; }
+  CAST.busy = true;
+  const gen = CAST.gen;
+  box.hidden = false; box.classList.add("thinking");
+  askClaude(buildPrompt(recent), 90)
+    .then((text) => { if (gen === CAST.gen) showCast(text || basicLine(recent), !!text); })
+    .catch((e) => {
+      if (gen !== CAST.gen) return;
+      CAST.err = castErrorText(e);
+      radio(`AI 해설 중지: ${CAST.err} (기본 해설로 전환)`, "bad");
+      showCast(basicLine(recent), false);
+    })
+    .finally(() => { if (gen === CAST.gen) { CAST.busy = false; CAST.lastReal = performance.now(); box.classList.remove("thinking"); } });
+}
+
+// 결과 화면 총평
+function castWrapUp(res) {
+  const el = $("wrapup");
+  if (!el) return;
+  const order = res.map((k, i) => `${i + 1}. ${k.racer.name}(${k.racer.animal})${k.isPlayer ? " [감독 팀]" : ""} ${fmtTime(k.finishTime)}${k.finished ? "" : " 예상"}`).join("\n");
+  const big = CAST.events.filter((e) => e.prio >= 2).slice(-8).map((e) => `- ${fmtTime(e.t)} ${e.text}`).join("\n") || "- (기록 없음)";
+  const prompt = `레이스가 끝났다. 이번에는 레이스 총평을 2~3문장, 120자 이내로 말해라. 감독 팀 결과를 꼭 언급해라.\n코스: ${TRACKS[TR.idx].name}\n최종 순위:\n${order}\n주요 장면:\n${big}`;
+  const gen = CAST.gen;
+  askClaude(prompt, 160)
+    .then((t) => { if (gen === CAST.gen && document.getElementById("wrapup")) el.querySelector("span").textContent = t || "멋진 레이스였어요!"; })
+    .catch((e) => { if (document.getElementById("wrapup")) el.querySelector("span").textContent = `총평을 가져오지 못했어요 (${castErrorText(e)})`; });
+}
+
+async function testCast() {
+  const out = $("castTest");
+  out.textContent = "확인 중…";
+  const t0 = performance.now();
+  try {
+    const text = await askClaude("연결 테스트다. '안녕하세요, 꼬꼬 캐스터입니다!'라고만 말해라.", 60);
+    out.textContent = `성공 · ${Math.round(performance.now() - t0)}ms · "${text}"`;
+    CAST.err = "";
+  } catch (e) {
+    out.textContent = `실패 · ${castErrorText(e)}`;
+  }
+}
+
+function drawCasterFace(cv) {
+  const g = cv.getContext("2d");
+  g.clearRect(0, 0, 92, 92);
+  g.save(); g.translate(46, 50); g.scale(30, 30);
+  circle(g, 0, 0.1, 1.15, "#ffe066", OUTLINE, 0.12);
+  g.beginPath(); g.moveTo(-0.15, -1.05); g.quadraticCurveTo(0, -1.6, 0.1, -1.05); g.quadraticCurveTo(0.35, -1.45, 0.3, -1.0); g.fillStyle = "#ffe066"; g.fill(); g.lineWidth = 0.1; g.strokeStyle = OUTLINE; g.stroke();
+  for (const sx of [-1, 1]) { circle(g, sx * 0.42, -0.1, 0.13, OUTLINE); circle(g, sx * 0.38, -0.15, 0.04, "#fff"); circle(g, sx * 0.72, 0.25, 0.16, "rgba(255,120,150,.55)"); }
+  g.beginPath(); g.moveTo(-0.22, 0.12); g.lineTo(0.22, 0.12); g.lineTo(0, 0.42); g.closePath(); g.fillStyle = "#ff9f1c"; g.fill(); g.stroke();
+  rrect(g, 0.75, 0.35, 0.28, 0.75, 0.12); g.fillStyle = "#3b3355"; g.fill();
+  circle(g, 0.89, 0.3, 0.26, "#8a8aa8", OUTLINE, 0.08);
+  g.restore();
+}
 
 // ═════════════ 게임 흐름 ═════════════
 function startAttract() {
@@ -1077,6 +1354,7 @@ function startAttract() {
   S.ccMax = 34;
   $("hud").hidden = true;
   viewOffY = 0;
+  castReset();
   if (engGain) engGain.gain.value = 0;
 }
 function startRace(trackIdx) {
@@ -1093,6 +1371,7 @@ function startRace(trackIdx) {
   updateItemSlot();
   camSnap = true;
   S.manualItem = false;
+  castReset();
   feedItems.forEach((f) => f.el.remove()); feedItems = [];
   syncPanel();
   requestAnimationFrame(placeFeed);
@@ -1131,7 +1410,7 @@ function step(dt) {
     S.countdown -= dt;
     const after = Math.ceil(S.countdown - 0.6);
     if (after !== before && after >= 1 && after <= 3) { showBanner(String(after)); sfx(440, 440, 0.18, "square", 0.12); }
-    if (S.countdown <= 0.6) { S.state = "race"; showBanner("GO!"); sfx(880, 880, 0.4, "square", 0.14); }
+    if (S.countdown <= 0.6) { S.state = "race"; showBanner("GO!"); sfx(880, 880, 0.4, "square", 0.14); castEvent(`레이스 스타트! ${player ? player.racer.name + "는 " + player.rank + "번째 자리에서 출발" : ""}`, 3); }
   }
   if (racing || S.state === "attract") {
     if (racing) S.raceTime += dt;
@@ -1216,6 +1495,17 @@ function step(dt) {
     // 순위
     const order = [...K].sort((a, b) => (a.finished && b.finished) ? a.finishTime - b.finishTime : a.finished ? -1 : b.finished ? 1 : b.prog - a.prog);
     order.forEach((k, i) => (k.rank = i + 1));
+    if (S.state !== "attract") {
+      const ld = order[0];
+      if (CAST.leaderId !== -1 && ld.id !== CAST.leaderId && !ld.finished) castEvent(`${ld.racer.name}가 선두로 올라섰다`, 3);
+      CAST.leaderId = ld.id;
+      if (ld.lap !== CAST.leaderLap && ld.lap >= 2 && ld.lap <= LAPS) castEvent(ld.lap === LAPS ? `선두 ${ld.racer.name} 마지막 랩 진입` : `선두 ${ld.racer.name} ${ld.lap}랩 진입`, ld.lap === LAPS ? 3 : 2);
+      CAST.leaderLap = ld.lap;
+      if (player && player.rank !== player.castRank) {
+        if (player.castRank && Math.abs(player.rank - player.castRank) >= 1) castEvent(`${player.racer.name} ${player.castRank}위에서 ${player.rank}위로 ${player.rank < player.castRank ? "상승" : "하락"}`, player.rank <= 3 || player.rank < player.castRank ? 2 : 1);
+        player.castRank = player.rank;
+      }
+    }
     if (player && S.state === "race") {
       player.rankT = (player.rankT || 0) - dt;
       if (player.rank !== player.lastRank && player.rankT <= 0) {
@@ -1554,12 +1844,14 @@ function loop(now) {
     for (let i = 0; i < n; i++) step(dt);
     tickFeed(dt);
   } else if (S.state === "results") updateCamera(dt);
+  castTick();
   draw();
   requestAnimationFrame(loop);
 }
 
 // ═════════════ 시작 ═════════════
 function boot(data) {
+  drawCasterFace($("casterFace"));
   if (data && data.sel) Object.assign(S.sel, data.sel);
   startAttract();
   viewTitle();
