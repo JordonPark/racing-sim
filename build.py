@@ -20,7 +20,7 @@ HEAD = """<!doctype html>
 <style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 """
 
-PAGES = ["kart/index.html", "web/index.html"]
+PAGES = ["kart2d/index.html", "kart/index.html", "web/index.html"]
 
 
 def main():

@@ -16,7 +16,7 @@ body {
   display: grid; place-items: center;
   padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
-main { width: min(720px, 100%); display: grid; gap: 22px; }
+main { width: min(980px, 100%); display: grid; gap: 22px; }
 h1 { margin: 0; text-align: center; font-weight: 400; font-size: clamp(44px, 11vw, 84px); line-height: 1; color: var(--sun);
   -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; transform: rotate(-2deg); }
 p.lead { margin: 0; text-align: center; font-size: 18px; }
@@ -39,10 +39,16 @@ footer { text-align: center; font-size: 14px; color: #1d1235cc; }
 <body>
 <main>
   <h1>Racing Sim</h1>
-  <p class="lead">운전은 AI가, 전략은 당신이. 레이싱 감독 시뮬레이션 두 편.</p>
+  <p class="lead">운전은 AI가, 전략은 당신이. 레이싱 감독 시뮬레이션 모음.</p>
   <div class="cards">
+    <a class="card" href="kart2d/">
+      <span class="tag">2D · 추천</span>
+      <h2>꼬마 카트 랠리</h2>
+      <span class="desc">여우·토끼·곰·개구리… 동물 친구들의 카트 팀 감독! 위에서 내려다보는 아기자기한 코스에서 주행·아이템 전략을 지시하세요.</span>
+      <span class="go">플레이 →</span>
+    </a>
     <a class="card" href="kart/">
-      <span class="tag">3D · 추천</span>
+      <span class="tag" style="background:#ff4f8b;color:#fff">3D</span>
       <h2>토이 카트 랠리</h2>
       <span class="desc">레이서와 카트 세팅을 고르고, 레이스 중 주행 스타일과 아이템 전략을 지시하세요. 드리프트 부스트와 아이템 배틀!</span>
       <span class="go">플레이 →</span>
