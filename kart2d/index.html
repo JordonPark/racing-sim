@@ -298,6 +298,22 @@ delete S.sel.castModel;
 try { localStorage.removeItem("tkr2d-apikey"); } catch (e) { /* 저장소 없음 */ }
 const saveSel = () => { try { localStorage.setItem("tkr2d-sel", JSON.stringify(S.sel)); } catch (e) { /* 무시 */ } };
 
+// ═════════════ ComfyUI 그림 (있으면 사용) ═════════════
+// tools/comfy_generate.py 가 kart2d/assets/ 에 만든 PNG를 읽는다. 없으면 코드로 그린 그림을 쓴다.
+const ART = { racers: [], decor: {}, ready: false };
+const DECOR_H = { tree: 7, bush: 3, mushroom: 3, cactus: 6, rock: 3.2, pine: 8, snowman: 5 };
+function loadArt() {
+  fetch("assets/manifest.json", { cache: "no-cache" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((m) => {
+      if (!m) return;
+      const load = (file, done) => { const im = new Image(); im.onload = () => { done(im); ART.ready = true; if (S.state === "attract" && !UI.hidden && document.querySelector("canvas.facec")) drawFaces(); }; im.src = "assets/" + file; };
+      Object.entries(m.racers || {}).forEach(([i, f]) => load(f, (im) => (ART.racers[+i] = im)));
+      Object.entries(m.decor || {}).forEach(([k, f]) => load(f, (im) => (ART.decor[k] = im)));
+    })
+    .catch(() => { /* 그림 없음: 기본 그림 사용 */ });
+}
+
 // ═════════════ 렌더러 (2D 캔버스) ═════════════
 const canvas = $("c");
 const ctx = canvas.getContext("2d");
@@ -985,6 +1001,8 @@ function drawFaces() {
   document.querySelectorAll("canvas.facec").forEach((cv) => {
     const g = cv.getContext("2d"), r = RACERS[+cv.dataset.r];
     g.clearRect(0, 0, 96, 96);
+    const im = ART.racers[+cv.dataset.r];
+    if (im) { const sc = Math.min(96 / im.width, 96 / im.height); g.drawImage(im, 48 - (im.width * sc) / 2, 48 - (im.height * sc) / 2, im.width * sc, im.height * sc); return; }
     g.save(); g.translate(48, 56); g.scale(42, 42); g.rotate(-Math.PI / 2);
     drawHead(g, r, 0);
     g.restore();
@@ -1430,6 +1448,13 @@ function updateCamera(dt) {
 // ── 그리기 ──
 function drawDecor(c, d) {
   const s = d.s, x = d.x, z = d.z;
+  const im = ART.decor[d.type];
+  if (im) {
+    const h = DECOR_H[d.type] * s, w = h * (im.width / im.height);
+    ellipse(c, x, z + 0.2 * s, w * 0.45, 0.8 * s, "rgba(40,30,60,.14)");
+    c.drawImage(im, x - w / 2, z - h + 0.3 * s, w, h);
+    return;
+  }
   c.save(); c.translate(x, z); c.scale(s, s);
   ellipse(c, 0, 0.2, 2.2, 0.8, "rgba(40,30,60,.14)");
   c.lineWidth = 0.18; c.strokeStyle = OUTLINE;
@@ -1533,13 +1558,18 @@ function drawKart(c, k, t) {
   rrect(c, 0.75, -0.5, 0.6, 1.0, 0.3); c.fillStyle = "rgba(255,255,255,.55)"; c.fill();
   rrect(c, -1.6, -1.0, 0.36, 2.0, 0.16); c.fillStyle = OUTLINE; c.fill();
   circle(c, 0.95, 0, 0.2, "#fff6e6", OUTLINE, 0.08);
-  drawHead(c, r, t);
+  const face = ART.racers[k.ri];
+  if (!face) drawHead(c, r, t);
   // 방패
   if (k.shieldT > 0) {
     circle(c, 0, 0, 2.15, `rgba(127,230,255,${0.22 + Math.sin(t * 8) * 0.06})`, "rgba(255,255,255,.8)", 0.12);
     circle(c, -0.6, -0.9, 0.35, "rgba(255,255,255,.6)");
   }
   c.restore();
+  if (face) {
+    const h = 3.0 * sc, w = h * (face.width / face.height), bob = Math.sin(t * 9 + k.ri) * 0.08 * sc;
+    c.drawImage(face, k.x - w / 2, k.z - h * 0.78 + bob, w, h);
+  }
   // 스핀 중 머리 위 별
   if (k.spinT > 0) {
     for (let i = 0; i < 3; i++) {
@@ -1672,7 +1702,7 @@ function draw() {
   const showAll = s > 3;
   for (const k of K) {
     if (!showAll && !k.isPlayer) continue;
-    const sx = cx + (k.x - cam.x) * s, sy = cy + (k.z - cam.z) * s - Math.max(26, 2.8 * s);
+    const sx = cx + (k.x - cam.x) * s, sy = cy + (k.z - cam.z) * s - Math.max(ART.racers[k.ri] ? 34 : 26, (ART.racers[k.ri] ? 3.6 : 2.8) * s * Math.max(1.45, 5 / s) / 1.45);
     if (sx < -40 || sx > VW + 40 || sy < -20 || sy > VH + 20) continue;
     const label = k.isPlayer && S.state !== "attract" ? `▼ ${k.racer.name}` : k.racer.name;
     const w = c.measureText(label).width + 12;
@@ -1699,6 +1729,7 @@ function loop(now) {
 // ═════════════ 시작 ═════════════
 function boot(data) {
   drawCasterFace($("casterFace"));
+  loadArt();
   if (data && data.sel) Object.assign(S.sel, data.sel);
   startAttract();
   viewTitle();

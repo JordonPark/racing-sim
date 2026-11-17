@@ -17,6 +17,19 @@
 
 선택 화면의 **레이스 해설**을 켜면 꼬꼬 캐스터가 선두 변경, 추월, 스핀, 로켓, 랩 진입, 결승 같은 사건을 말풍선으로 중계합니다. 규칙 기반이라 외부 AI 호출이나 비용이 없습니다. **음성 읽기**를 켜면 브라우저 음성 합성(ko-KR)으로 읽어 줍니다.
 
+### 꼬마 카트 랠리 – ComfyUI 그림
+
+`tools/comfy_generate.py`가 ComfyUI로 레이서 초상화 8장과 장식(나무·덤불·버섯·선인장·바위·소나무·눈사람) 7장을 만들어 `kart2d/assets/`에 저장합니다. 게임은 이 폴더에 그림이 있으면 그 그림을 쓰고, 없으면 코드로 그린 그림을 씁니다.
+
+ComfyUI가 켜진 PC에서(Windows 포터블 기준):
+
+```
+cd C:\AI\ComfyUI_windows_portable
+.\python_embeded\python.exe <racing-sim 경로>\tools\comfy_generate.py
+```
+
+체크포인트는 SDXL 계열이 있으면 자동으로 고르고, `--ckpt 이름.safetensors`로 지정할 수 있습니다. 끝나면 `kart2d/assets`를 커밋해 올리면 GitHub Pages에 반영됩니다.
+
 ---
 
 ## GRID MASTER (CLI) 🏁
