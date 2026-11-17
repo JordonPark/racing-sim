@@ -41,17 +41,35 @@ NEGATIVE = ("text, letters, watermark, signature, logo, frame, border, realistic
             "blurry, noisy, dark background, gradient background, shadow on background, cropped, "
             "multiple characters, extra limbs, deformed, ugly")
 
+# Illustrious / NoobAI / Pony 같은 애니메 SDXL 모델은 태그 나열식 프롬프트를 잘 따른다
+TAG_STYLE = ("masterpiece, best quality, amazing quality, chibi, kawaii, flat color, thick outlines, "
+             "simple shading, pastel colors, sticker, solo, centered, white background, simple background")
+TAG_NEGATIVE = ("worst quality, low quality, lowres, bad anatomy, bad hands, jpeg artifacts, signature, watermark, "
+                "username, text, artist name, logo, frame, border, multiple views, realistic, photo, 3d, "
+                "gradient background, dark background, cropped")
+TAG_MODELS = ("illustrious", "noob", "pony", "animagine")
+
 # 게임 레이서와 같은 순서 (RACERS 배열)
+# (파일 이름, 동물, 문장 설명, 헬멧 색, 태그 설명)
 RACERS = [
-    ("volt", "fox", "orange fox with white muzzle", "red"),
-    ("mimi", "bunny", "white bunny with long pink ears", "pink"),
-    ("kai", "bear", "brown bear cub", "sky blue"),
-    ("lulu", "cat", "cream colored cat with pink inner ears", "yellow"),
-    ("deokgu", "puppy", "beige puppy with floppy brown ears", "brown"),
-    ("piko", "frog", "green frog with big round eyes", "green"),
-    ("jelly", "alien", "lavender little alien with one antenna", "purple"),
-    ("toto", "hamster", "orange and white hamster with chubby cheeks", "orange"),
+    ("volt", "fox", "orange fox with white muzzle", "red", "fox, orange fur, white muzzle"),
+    ("mimi", "bunny", "white bunny with long pink ears", "pink", "rabbit, white fur, long ears, pink inner ears"),
+    ("kai", "bear", "brown bear cub", "sky blue", "bear cub, brown fur, round ears"),
+    ("lulu", "cat", "cream colored cat with pink inner ears", "yellow", "cat, cream fur, pink inner ears"),
+    ("deokgu", "puppy", "beige puppy with floppy brown ears", "brown", "puppy, dog, beige fur, floppy ears"),
+    ("piko", "frog", "green frog with big round eyes", "green", "frog, green skin, big round eyes"),
+    ("jelly", "alien", "lavender little alien with one antenna", "purple", "alien, lavender skin, single antenna, big eyes"),
+    ("toto", "hamster", "orange and white hamster with chubby cheeks", "orange", "hamster, orange and white fur, chubby cheeks"),
 ]
+DECOR_TAGS = {
+    "tree": "tree, round fluffy green leaves, short brown trunk, no humans, object focus",
+    "bush": "bush, round, green leaves, red berries, no humans, object focus",
+    "mushroom": "mushroom, red cap, white spots, no humans, object focus",
+    "cactus": "cactus, green, two arms, pink flower, no humans, object focus",
+    "rock": "rock, round smooth stone, orange, desert, no humans, object focus",
+    "pine": "pine tree, snow on branches, no humans, object focus",
+    "snowman": "snowman, red scarf, carrot nose, no humans, object focus",
+}
 DECOR = {
     "tree": "a round fluffy green tree with short brown trunk, single tree",
     "bush": "a small round green bush with tiny red berries",
@@ -165,9 +183,12 @@ def main():
         sys.exit(f"ComfyUI({server})에 연결할 수 없습니다. ComfyUI를 먼저 실행해 주세요. ({e})")
 
     ckpt, names = pick_checkpoint(server, args.ckpt)
-    xl = "xl" in ckpt.lower()
+    low = ckpt.lower()
+    tags = any(t in low for t in TAG_MODELS)
+    xl = "xl" in low or tags
     size = 1024 if xl else 512
-    print(f"체크포인트: {ckpt}  ({'SDXL' if xl else 'SD1.5'} 기준 {size}px)")
+    print(f"체크포인트: {ckpt}  ({'SDXL' if xl else 'SD1.5'} 기준 {size}px, {'태그' if tags else '문장'} 프롬프트)")
+    neg = TAG_NEGATIVE if tags else NEGATIVE
     print(f"(사용 가능: {', '.join(names)})")
     OUT.mkdir(parents=True, exist_ok=True)
     manifest_path = OUT / "manifest.json"
@@ -176,18 +197,23 @@ def main():
 
     jobs = []
     if args.only in ("racer", "all"):
-        for i, (key, animal, look, color) in enumerate(RACERS):
-            pos = (f"portrait of a {look} wearing a tiny {color} racing helmet with goggles, smiling, "
-                   f"head and shoulders, facing the viewer, {STYLE}")
+        for i, (key, animal, look, color, tag) in enumerate(RACERS):
+            if tags:
+                pos = (f"{TAG_STYLE}, no humans, animal focus, {tag}, {color} racing helmet, goggles on helmet, "
+                       f"smile, open mouth, looking at viewer, upper body, portrait")
+            else:
+                pos = (f"portrait of a {look} wearing a tiny {color} racing helmet with goggles, smiling, "
+                       f"head and shoulders, facing the viewer, {STYLE}")
             jobs.append(("racers", str(i), f"racer_{key}.png", pos, 256))
     if args.only in ("decor", "all"):
         for key, desc in DECOR.items():
-            jobs.append(("decor", key, f"decor_{key}.png", f"{desc}, side view, full object visible, {STYLE}", 256))
+            pos = f"{TAG_STYLE}, {DECOR_TAGS[key]}, full body, side view" if tags else f"{desc}, side view, full object visible, {STYLE}"
+            jobs.append(("decor", key, f"decor_{key}.png", pos, 256))
 
     for n, (group, key, fname, pos, px) in enumerate(jobs, 1):
         t0 = time.time()
         print(f"[{n}/{len(jobs)}] {fname} 생성 중…", end="", flush=True)
-        img = generate(server, workflow(ckpt, pos, NEGATIVE, size, size, seed0 + n, args.steps))
+        img = generate(server, workflow(ckpt, pos, neg, size, size, seed0 + n, args.steps))
         img = fit(remove_white_bg(img), px)
         img.save(OUT / fname)
         manifest[group][key] = fname
